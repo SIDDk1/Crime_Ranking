@@ -13,7 +13,7 @@ function App() {
 
   useEffect(() => {
     // 1. Fetch Area Data
-    fetch('http://localhost:8000/api/areas')
+    fetch('https://crime-ranking.onrender.com/api/areas')
       .then(res => res.json())
       .then(data => setAreas(data))
       .catch(err => console.error("Error fetching areas: ", err));
@@ -24,7 +24,7 @@ function App() {
 
   useEffect(() => {
     // 3. Listen for Real-Time Video Alerts via SSE
-    const eventSource = new EventSource('http://localhost:8000/api/alerts');
+    const eventSource = new EventSource('https://crime-ranking.onrender.com/api/alerts');
     
     eventSource.onmessage = (event) => {
       const data = JSON.parse(event.data);

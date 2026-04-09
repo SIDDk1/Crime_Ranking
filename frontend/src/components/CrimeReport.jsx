@@ -9,7 +9,7 @@ const CrimeReport = () => {
   }, []);
 
   const fetchReport = () => {
-    fetch('http://localhost:8000/api/generate-report')
+    fetch('https://crime-ranking.onrender.com/api/generate-report')
       .then(res => res.json())
       .then(data => setReport(data))
       .catch(err => console.error("Error fetching report:", err));

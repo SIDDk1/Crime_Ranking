@@ -5,7 +5,7 @@ const VideoFeed = () => {
     <div className="video-feed-container">
       <div className="video-wrapper">
         <img 
-          src="http://localhost:8000/video_feed" 
+          src="https://crime-ranking.onrender.com/video_feed" 
           alt="Live Security Feed" 
           className="live-video"
           onError={(e) => {
