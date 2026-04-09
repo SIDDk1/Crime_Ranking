@@ -1,0 +1,5 @@
+- `[x]` Create universal `.gitignore` to block massive binaries and logs natively
+- `[x]` Build standard UTC-8 Windows `requirements.txt` correctly mapped for Cloud Deployments
+- `[ ]` Execute `git init`, set branch to main and bind remote origin
+- `[ ]` Push all project architectures actively to GitHub
+- `[ ]` Construct deployment `walkthrough.md` mapping paths for Vercel and Render

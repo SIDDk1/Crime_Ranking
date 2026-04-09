@@ -1,0 +1,31 @@
+# Virtual Environments
+backend/venv/
+backend/env/
+.env
+__pycache__/
+*.pyc
+
+# Node
+frontend/node_modules/
+frontend/dist/
+frontend/.npm
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Database/Logs
+backend/crime_logs.db
+backend/logs/
+
+# Optional: Kaggle downloads if you want them ignored (we are committing the current 5MB CSV because it fits fine)
+# backend/crime_dataset_india.csv
+
+# IDE
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
