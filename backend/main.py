@@ -11,11 +11,11 @@ from video import VideoProcessor
 
 app = FastAPI(title="Crime Ranking API")
 
-# Setup CORS for React frontend
+# Setup CORS for React frontend (Wildcard origins allowed only if credentials are False)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], # For dev only. Should restrict in prod
-    allow_credentials=True,
+    allow_origins=["*"], 
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
