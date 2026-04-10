@@ -3,6 +3,7 @@ import DashboardMap from './components/DashboardMap';
 import VideoFeed from './components/VideoFeed';
 import AlertPopup from './components/AlertPopup';
 import CrimeReport from './components/CrimeReport';
+import BuildingBackground from './components/BuildingBackground';
 import { Shield, AlertTriangle, LayoutDashboard, BrainCircuit, FileBarChart } from 'lucide-react';
 import './App.css';
 
@@ -51,6 +52,7 @@ function App() {
 
   return (
     <div className="app-container">
+      <BuildingBackground />
       {currentAlert && <AlertPopup message={currentAlert.msg} onClose={() => setCurrentAlert(null)} />}
       
       {/* Sidebar */}
