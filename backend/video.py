@@ -76,8 +76,6 @@ class VideoProcessor:
     def _process_frame(self, frame):
         self.frame_count += 1
         
-        motion_detected = False
-        
         # 1. Advanced DL Processing (Throttled to prevent lag/freezing)
         if self.dl_enabled and self.dl_model:
             # Predict only once every 30 frames (about once a second) to prevent video stream stutter
@@ -97,47 +95,52 @@ class VideoProcessor:
                     if class_label != "NORMAL" and np.max(prediction[0]) > 0.6:
                         self.anomaly_detected = True
                         self.detected_crime = class_label
-                        self.anomaly_message = f"{class_label} CRIME DETECTED"
+                        self.anomaly_message = f"{class_label} DETECTED"
                     else:
                         self.anomaly_detected = False
                 except Exception as e:
                     pass
-        
-        # 2. Traditional Motion detection Fallback
-        elif not self.dl_enabled:
-            # Apply Background Subtraction
-            fg_mask = self.bg_subtractor.apply(frame)
-            
-            # Clean up the mask using morphological operations
-            kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5))
-            fg_mask = cv2.morphologyEx(fg_mask, cv2.MORPH_OPEN, kernel)
-            
-            # Find contours
-            contours, _ = cv2.findContours(fg_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-            
-            for contour in contours:
-                # Filter by area to avoid small noises triggering anomaly
-                if cv2.contourArea(contour) > 2000:
-                    motion_detected = True
-                    self.anomaly_message = "MOTION ANOMALY DETECTED"
-                    self.detected_crime = "Motion Anomaly"
-                    x, y, w, h = cv2.boundingRect(contour)
-                    cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 0, 255), 3)
                     
-            self.anomaly_detected = motion_detected
+        # 2. Always locate the moving objects (suspects) dynamically using OpenCV
+        fg_mask = self.bg_subtractor.apply(frame)
+        kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5))
+        fg_mask = cv2.morphologyEx(fg_mask, cv2.MORPH_OPEN, kernel)
+        contours, _ = cv2.findContours(fg_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        
+        motion_boxes = []
+        for contour in contours:
+            if cv2.contourArea(contour) > 2000:
+                x, y, w, h = cv2.boundingRect(contour)
+                motion_boxes.append((x, y, w, h))
 
-        # Overlay global warning UI if AI/motion detects behavior
+        # 3. Handle Fallback if Deep Learning is missing
+        if not self.dl_enabled:
+            if len(motion_boxes) > 0:
+                self.anomaly_detected = True
+                self.detected_crime = "Motion Anomaly"
+                self.anomaly_message = "MOTION ANOMALY DETECTED"
+            else:
+                self.anomaly_detected = False
+
+        # 4. Draw Specific Target Red Boxes
         if self.anomaly_detected:
-            cv2.putText(frame, self.anomaly_message, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
+            # Draw precise red boxes around the people actually generating the movement
+            for (x, y, w, h) in motion_boxes:
+                # Main Red Bounding Box
+                cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 0, 255), 3)
+                # Label right above the targeted box
+                cv2.putText(frame, self.anomaly_message, (x, y - 15), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
             
-            # Draw a big red border around the whole frame for AI alerts
-            if self.dl_enabled:
-                cv2.rectangle(frame, (0,0), (frame.shape[1], frame.shape[0]), (0, 0, 255), 5)
-            
-            # Rate limit logging to max 1 per 5 seconds
+            # If no motion box exists perfectly but AI flagged it, put label on top left
+            if not motion_boxes:
+                 cv2.putText(frame, self.anomaly_message, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
+                 
+            # Add security camera red border for cinematic context
+            cv2.rectangle(frame, (0,0), (frame.shape[1], frame.shape[0]), (0, 0, 255), 4)
+
+            # Rate limit database logging to 1 frame per 5 seconds
             current_time = time.time()
             if current_time - self.last_log_time > 5:
-                # Ensure logs directory exists
                 os.makedirs('logs/frames', exist_ok=True)
                 frame_filename = f"logs/frames/anomaly_{int(current_time)}.jpg"
                 cv2.imwrite(frame_filename, frame)
