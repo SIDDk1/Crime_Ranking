@@ -16,10 +16,6 @@ class VideoProcessor:
         self.last_log_time = 0
         self.anomaly_message = "MOTION ANOMALY DETECTED"
         
-        # Threading support built directly into processor to prevent lag
-        self.current_frame_for_ml = None
-        self.ml_lock = threading.Lock()
-        
         # Deep Learning Support Integration
         self.dl_model = None
         self.idx_to_class = None
@@ -38,47 +34,8 @@ class VideoProcessor:
                 
                 self.dl_enabled = True
                 print("Deep Learning Video Anomaly Model structure successfully loaded!")
-                
-                # Start the background inference thread safely
-                self.ml_thread = threading.Thread(target=self._ml_worker, daemon=True)
-                self.ml_thread.start()
         except Exception as e:
             print("DL model not loaded. Falling back to simple background subtractor. Error:", e)
-
-    def _ml_worker(self):
-        """Operates on a separate background thread so the UI video never lags."""
-        while True:
-            frame_to_process = None
-            with self.ml_lock:
-                if self.current_frame_for_ml is not None:
-                    frame_to_process = self.current_frame_for_ml.copy()
-                    self.current_frame_for_ml = None # Clear after grabbing to avoid redundant work
-                    
-            if frame_to_process is not None:
-                try:
-                    # Resize to 128x128 as defined in training
-                    input_frame = cv2.resize(frame_to_process, (128, 128))
-                    input_frame = cv2.cvtColor(input_frame, cv2.COLOR_BGR2RGB)
-                    input_frame = np.expand_dims(input_frame, axis=0)
-                    input_frame = input_frame.astype('float32') / 255.0
-                    
-                    prediction = self.dl_model.predict(input_frame, verbose=0)
-                    class_idx = np.argmax(prediction[0])
-                    class_label = self.idx_to_class.get(str(class_idx), "normal").upper()
-                    
-                    # Confidence threshold check > 60%
-                    if class_label != "NORMAL" and np.max(prediction[0]) > 0.6:
-                        self.anomaly_detected = True
-                        self.anomaly_message = f"{class_label} CRIME DETECTED"
-                        self.detected_crime = class_label
-                    else:
-                        self.anomaly_detected = False
-                        self.detected_crime = None
-                except Exception as e:
-                    pass
-            
-            # Avoid CPU burn by letting thread sleep before snapping next frame
-            time.sleep(0.3) 
 
     def generate_frames(self):
         # Create a dummy colored image if video doesn't exist to avoid crashing
@@ -101,6 +58,7 @@ class VideoProcessor:
             success, frame = cap.read()
             if not success:
                 cap.set(cv2.CAP_PROP_POS_FRAMES, 0) # Loop video
+                time.sleep(0.1) # Fix CPU freeze on corrupt frames
                 continue
                 
             frame = cv2.resize(frame, (640, 480))
@@ -112,21 +70,41 @@ class VideoProcessor:
             yield (b'--frame\r\n'
                    b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
             
-            # Control frame rate smoothly without AI stutter
+            # Control frame rate
             time.sleep(0.04)
 
     def _process_frame(self, frame):
         self.frame_count += 1
         
-        # 1. Advanced DL Thread Dispatcher
-        if self.dl_enabled:
-            # Drop frame into background AI worker safely
-            with self.ml_lock:
-                self.current_frame_for_ml = frame
-                
+        motion_detected = False
+        
+        # 1. Advanced DL Processing (Throttled to prevent lag/freezing)
+        if self.dl_enabled and self.dl_model:
+            # Predict only once every 30 frames (about once a second) to prevent video stream stutter
+            if self.frame_count % 30 == 0:
+                try:
+                    # Resize to 128x128 as defined in training
+                    input_frame = cv2.resize(frame, (128, 128))
+                    input_frame = cv2.cvtColor(input_frame, cv2.COLOR_BGR2RGB)
+                    input_frame = np.expand_dims(input_frame, axis=0)
+                    input_frame = input_frame.astype('float32') / 255.0
+                    
+                    prediction = self.dl_model.predict(input_frame, verbose=0)
+                    class_idx = np.argmax(prediction[0])
+                    class_label = self.idx_to_class.get(str(class_idx), "normal").upper()
+                    
+                    # Confidence threshold check > 60%
+                    if class_label != "NORMAL" and np.max(prediction[0]) > 0.6:
+                        self.anomaly_detected = True
+                        self.detected_crime = class_label
+                        self.anomaly_message = f"{class_label} CRIME DETECTED"
+                    else:
+                        self.anomaly_detected = False
+                except Exception as e:
+                    pass
+        
         # 2. Traditional Motion detection Fallback
         elif not self.dl_enabled:
-            motion_detected = False
             # Apply Background Subtraction
             fg_mask = self.bg_subtractor.apply(frame)
             
