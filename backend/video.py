@@ -22,6 +22,11 @@ class VideoProcessor:
         self.dl_enabled = False
         self.detected_crime = None
         
+        # Offload heavyweight AI loading to a background thread to allow instant backend startup
+        threading.Thread(target=self._async_load_keras_model, daemon=True).start()
+
+    def _async_load_keras_model(self):
+        """Asynchronously boots TensorFlow so FastAPI connects instantly without 1min startup lag."""
         try:
             import tensorflow as tf
             if os.path.exists('video_anomaly_model.h5'):
@@ -33,9 +38,9 @@ class VideoProcessor:
                     self.idx_to_class = {"0": "normal", "1": "fight", "2": "robbery", "3": "vandalism"}
                 
                 self.dl_enabled = True
-                print("Deep Learning Video Anomaly Model structure successfully loaded!")
+                print("\n✅ Deep Learning Model successfully loaded in the background! Video AI is now active.")
         except Exception as e:
-            print("DL model not loaded. Falling back to simple background subtractor. Error:", e)
+            print("\n⚠️ DL model not automatically loaded. Running seamlessly on standard motion tracking. Error:", e)
 
     def generate_frames(self):
         # Create a dummy colored image if video doesn't exist to avoid crashing
