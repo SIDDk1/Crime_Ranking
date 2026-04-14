@@ -11,6 +11,11 @@ from video import VideoProcessor
 
 app = FastAPI(title="Crime Ranking API")
 
+@app.get("/")
+async def root():
+    """Health check endpoint for cron-job pinging."""
+    return {"status": "online", "message": "Crime Ranking API is running"}
+
 # Setup CORS for React frontend (Wildcard origins allowed only if credentials are False)
 app.add_middleware(
     CORSMiddleware,
