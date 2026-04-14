@@ -25,7 +25,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-video_processor = VideoProcessor('demo_video.mp4')
+# Initialize multiple camera processors mapped to IDs (Shared AI Model handles memory)
+camera_processors = {
+    1: VideoProcessor('demo_video.mp4'),
+    2: VideoProcessor('demo_video_2.mp4'),
+    3: VideoProcessor('demo_video_3.mp4'),
+    4: VideoProcessor('demo_video_4.mp4')
+}
 
 # 1. Area Ranking Data Endpoint
 @app.get("/api/areas")
@@ -69,25 +75,27 @@ async def generate_report():
 
 # 2. Video Streaming Endpoint
 @app.get("/video_feed")
-async def video_feed():
-    """Stream OpenCV processed video frames."""
-    return StreamingResponse(video_processor.generate_frames(), media_type="multipart/x-mixed-replace; boundary=frame")
+async def video_feed(camera: int = 1):
+    """Stream OpenCV processed video frames targeting a specific camera."""
+    # Retrieve the correct active camera, default to 1 if out of bounds
+    processor = camera_processors.get(camera, camera_processors[1])
+    return StreamingResponse(processor.generate_frames(), media_type="multipart/x-mixed-replace; boundary=frame")
 
 # 3. Real-time Alerts Notification Endpoint (SSE)
 @app.get("/api/alerts")
 async def alert_stream():
-    """Server-Sent Events endpoint to push alerts when video anomaly is detected."""
+    """Server-Sent Events endpoint to push alerts when ANY camera detects video anomaly."""
     async def event_generator():
         last_alert_state = False
         while True:
-            # Check if video processor found something
-            current_alert_state = video_processor.check_anomaly()
+            # Check if ANY of our 4 camera processors found something
+            current_alert_state = any(p.check_anomaly() for p in camera_processors.values())
             
             # If changed from False to True, trigger an alert to the frontend
             if current_alert_state and not last_alert_state:
                 yield {
                     "event": "message",
-                    "data": '{"alert": true, "message": "CRITICAL: Suspicious Activity Detected on Camera 1", "type": "video"}'
+                    "data": '{"alert": true, "message": "CRITICAL: Suspicious Activity Detected on Security System", "type": "video"}'
                 }
             
             last_alert_state = current_alert_state

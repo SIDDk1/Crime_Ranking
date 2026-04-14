@@ -6,6 +6,31 @@ import numpy as np
 import json
 import threading
 
+# Global Singleton AI Model state to prevent duplicate loading across 4 cameras
+GLOBAL_DL_MODEL = None
+GLOBAL_IDX_TO_CLASS = None
+GLOBAL_DL_ENABLED = False
+GLOBAL_LOADING_STARTED = False
+_model_lock = threading.Lock()
+
+def _async_load_keras_model_singleton():
+    """Asynchronously boots TensorFlow globally so FastAPI connects instantly."""
+    global GLOBAL_DL_MODEL, GLOBAL_IDX_TO_CLASS, GLOBAL_DL_ENABLED
+    try:
+        import tensorflow as tf
+        if os.path.exists('video_anomaly_model.h5'):
+            GLOBAL_DL_MODEL = tf.keras.models.load_model('video_anomaly_model.h5', compile=False)
+            if os.path.exists('class_mapping.json'):
+                with open('class_mapping.json', 'r') as f:
+                    GLOBAL_IDX_TO_CLASS = json.load(f)
+            else:
+                GLOBAL_IDX_TO_CLASS = {"0": "normal", "1": "fight", "2": "robbery", "3": "vandalism"}
+            
+            GLOBAL_DL_ENABLED = True
+            print("\n✅ Deep Learning Model successfully loaded globally! All cameras now have AI context.")
+    except Exception as e:
+        print("\n⚠️ DL model not automatically loaded. Running seamlessly on standard motion tracking. Error:", e)
+
 class VideoProcessor:
     def __init__(self, video_path='demo_video.mp4'):
         self.video_path = video_path
@@ -15,32 +40,13 @@ class VideoProcessor:
         self.bg_subtractor = cv2.createBackgroundSubtractorMOG2(history=500, varThreshold=50, detectShadows=True)
         self.last_log_time = 0
         self.anomaly_message = "MOTION ANOMALY DETECTED"
-        
-        # Deep Learning Support Integration
-        self.dl_model = None
-        self.idx_to_class = None
-        self.dl_enabled = False
         self.detected_crime = None
         
-        # Offload heavyweight AI loading to a background thread to allow instant backend startup
-        threading.Thread(target=self._async_load_keras_model, daemon=True).start()
-
-    def _async_load_keras_model(self):
-        """Asynchronously boots TensorFlow so FastAPI connects instantly without 1min startup lag."""
-        try:
-            import tensorflow as tf
-            if os.path.exists('video_anomaly_model.h5'):
-                self.dl_model = tf.keras.models.load_model('video_anomaly_model.h5', compile=False)
-                if os.path.exists('class_mapping.json'):
-                    with open('class_mapping.json', 'r') as f:
-                        self.idx_to_class = json.load(f)
-                else:
-                    self.idx_to_class = {"0": "normal", "1": "fight", "2": "robbery", "3": "vandalism"}
-                
-                self.dl_enabled = True
-                print("\n✅ Deep Learning Model successfully loaded in the background! Video AI is now active.")
-        except Exception as e:
-            print("\n⚠️ DL model not automatically loaded. Running seamlessly on standard motion tracking. Error:", e)
+        with _model_lock:
+            global GLOBAL_LOADING_STARTED
+            if not GLOBAL_LOADING_STARTED:
+                GLOBAL_LOADING_STARTED = True
+                threading.Thread(target=_async_load_keras_model_singleton, daemon=True).start()
 
     def generate_frames(self):
         # Create a dummy colored image if video doesn't exist to avoid crashing
@@ -82,7 +88,7 @@ class VideoProcessor:
         self.frame_count += 1
         
         # 1. Advanced DL Processing (Throttled to prevent lag/freezing)
-        if self.dl_enabled and self.dl_model:
+        if GLOBAL_DL_ENABLED and GLOBAL_DL_MODEL:
             # Predict only once every 30 frames (about once a second) to prevent video stream stutter
             if self.frame_count % 30 == 0:
                 try:
@@ -92,9 +98,9 @@ class VideoProcessor:
                     input_frame = np.expand_dims(input_frame, axis=0)
                     input_frame = input_frame.astype('float32') / 255.0
                     
-                    prediction = self.dl_model.predict(input_frame, verbose=0)
+                    prediction = GLOBAL_DL_MODEL.predict(input_frame, verbose=0)
                     class_idx = np.argmax(prediction[0])
-                    class_label = self.idx_to_class.get(str(class_idx), "normal").upper()
+                    class_label = GLOBAL_IDX_TO_CLASS.get(str(class_idx), "normal").upper()
                     
                     # Confidence threshold check > 60%
                     if class_label != "NORMAL" and np.max(prediction[0]) > 0.6:
@@ -119,7 +125,7 @@ class VideoProcessor:
                 motion_boxes.append((x, y, w, h))
 
         # 3. Handle Fallback if Deep Learning is missing
-        if not self.dl_enabled:
+        if not GLOBAL_DL_ENABLED:
             if len(motion_boxes) > 0:
                 self.anomaly_detected = True
                 self.detected_crime = "Motion Anomaly"
