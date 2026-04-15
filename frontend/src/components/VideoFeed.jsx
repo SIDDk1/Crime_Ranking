@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 
 const VideoFeed = () => {
   const [activeCamera, setActiveCamera] = useState(1);
+  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
   return (
     <div className="video-feed-container">
@@ -29,17 +30,22 @@ const VideoFeed = () => {
       </div>
       <div className="video-wrapper">
         <img 
-          src={`https://crime-ranking.onrender.com/video_feed?camera=${activeCamera}`} 
+          src={`${API_URL}/video_feed?camera=${activeCamera}`} 
           alt={`Live Security Feed Camera ${activeCamera}`} 
           className="live-video"
-          // Adding a key forces the img to re-mount when camera changes, avoiding stale images
           key={activeCamera}
           onError={(e) => {
             e.target.style.display = 'none';
             e.target.nextSibling.style.display = 'flex';
           }}
+          onLoad={(e) => {
+            e.target.style.display = 'block';
+            if (e.target.nextSibling) {
+              e.target.nextSibling.style.display = 'none';
+            }
+          }}
         />
-        <div className="video-placeholder" style={{ display: 'none' }}>
+        <div className="video-placeholder" style={{ display: 'none', width: '100%', height: '100%', justifyContent: 'center', alignItems: 'center', backgroundColor: '#1a202c', color: '#a0aec0' }}>
           <span>Camera feed offline or loading...</span>
         </div>
         <div className="camera-overlay">
