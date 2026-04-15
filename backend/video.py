@@ -27,9 +27,9 @@ def _async_load_keras_model_singleton():
                 GLOBAL_IDX_TO_CLASS = {"0": "normal", "1": "fight", "2": "robbery", "3": "vandalism"}
             
             GLOBAL_DL_ENABLED = True
-            print("\n✅ Deep Learning Model successfully loaded globally! All cameras now have AI context.")
+            print("\n[SUCCESS] Deep Learning Model successfully loaded globally! All cameras now have AI context.")
     except Exception as e:
-        print("\n⚠️ DL model not automatically loaded. Running seamlessly on standard motion tracking. Error:", e)
+        print("\n[WARNING] DL model not automatically loaded. Running seamlessly on standard motion tracking. Error:", e)
 
 class VideoProcessor:
     def __init__(self, video_path='demo_video.mp4'):
@@ -37,7 +37,7 @@ class VideoProcessor:
         self.anomaly_detected = False
         self.frame_count = 0
         self.anomaly_duration = 0
-        self.bg_subtractor = cv2.createBackgroundSubtractorMOG2(history=500, varThreshold=50, detectShadows=True)
+        self.bg_subtractor = cv2.createBackgroundSubtractorMOG2(history=50, varThreshold=50, detectShadows=False)
         self.last_log_time = 0
         self.anomaly_message = "MOTION ANOMALY DETECTED"
         self.detected_crime = None
