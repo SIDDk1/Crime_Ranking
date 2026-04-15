@@ -1,5 +1,6 @@
 import cv2
 import time
+import asyncio
 import os
 import db
 import numpy as np
@@ -48,7 +49,7 @@ class VideoProcessor:
                 GLOBAL_LOADING_STARTED = True
                 threading.Thread(target=_async_load_keras_model_singleton, daemon=True).start()
 
-    def generate_frames(self):
+    async def generate_frames(self):
         # Create a dummy colored image if video doesn't exist to avoid crashing
         if not os.path.exists(self.video_path):
             print(f"Warning: {self.video_path} not found. Generating dummy feed.")
@@ -62,27 +63,30 @@ class VideoProcessor:
                 frame_bytes = buffer.tobytes()
                 yield (b'--frame\r\n'
                        b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
-                time.sleep(0.1)
+                await asyncio.sleep(0.1)
 
         cap = cv2.VideoCapture(self.video_path)
-        while True:
-            success, frame = cap.read()
-            if not success:
-                cap.set(cv2.CAP_PROP_POS_FRAMES, 0) # Loop video
-                time.sleep(0.1) # Fix CPU freeze on corrupt frames
-                continue
+        try:
+            while True:
+                success, frame = cap.read()
+                if not success:
+                    cap.set(cv2.CAP_PROP_POS_FRAMES, 0) # Loop video
+                    await asyncio.sleep(0.1) # Fix CPU freeze on corrupt frames
+                    continue
+                    
+                frame = cv2.resize(frame, (640, 480))
+                self._process_frame(frame)
+
+                ret, buffer = cv2.imencode('.jpg', frame)
+                frame_bytes = buffer.tobytes()
+
+                yield (b'--frame\r\n'
+                       b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
                 
-            frame = cv2.resize(frame, (640, 480))
-            self._process_frame(frame)
-
-            ret, buffer = cv2.imencode('.jpg', frame)
-            frame_bytes = buffer.tobytes()
-
-            yield (b'--frame\r\n'
-                   b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
-            
-            # Control frame rate
-            time.sleep(0.04)
+                # Control frame rate
+                await asyncio.sleep(0.04)
+        finally:
+            cap.release()
 
     def _process_frame(self, frame):
         self.frame_count += 1
