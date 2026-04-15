@@ -36,11 +36,9 @@ class VideoProcessor:
     def __init__(self, video_path='demo_video.mp4'):
         self.video_path = video_path
         self.anomaly_detected = False
-        self.frame_count = 0
-        self.anomaly_duration = 0
-        self.bg_subtractor = cv2.createBackgroundSubtractorMOG2(history=50, varThreshold=50, detectShadows=False)
         self.last_log_time = 0
         self.anomaly_message = "MOTION ANOMALY DETECTED"
+        self.anomaly_detected = False
         self.detected_crime = None
         
         with _model_lock:
@@ -49,7 +47,11 @@ class VideoProcessor:
                 GLOBAL_LOADING_STARTED = True
                 threading.Thread(target=_async_load_keras_model_singleton, daemon=True).start()
 
-    async def generate_frames(self):
+    def generate_frames(self):
+        # Localize these variables purely to this specific stream connection so they don't corrupt in multi-threading
+        bg_subtractor = cv2.createBackgroundSubtractorMOG2(history=50, varThreshold=50, detectShadows=False)
+        frame_count = 0
+        
         # Create a dummy colored image if video doesn't exist to avoid crashing
         if not os.path.exists(self.video_path):
             print(f"Warning: {self.video_path} not found. Generating dummy feed.")
@@ -57,13 +59,14 @@ class VideoProcessor:
                 frame = cv2.resize(cv2.imread(cv2.samples.findFile('starry_night.jpg', required=False)) if cv2.imread(cv2.samples.findFile('starry_night.jpg', required=False)) is not None else np.zeros((480, 640, 3), dtype=np.uint8), (640, 480))
                 
                 # Simulate detection
-                self._process_frame(frame)
+                frame_count += 1
+                self._process_frame(frame, bg_subtractor, frame_count)
                 
                 ret, buffer = cv2.imencode('.jpg', frame)
                 frame_bytes = buffer.tobytes()
                 yield (b'--frame\r\n'
                        b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
-                await asyncio.sleep(0.1)
+                time.sleep(0.1)
 
         cap = cv2.VideoCapture(self.video_path)
         try:
@@ -71,11 +74,12 @@ class VideoProcessor:
                 success, frame = cap.read()
                 if not success:
                     cap.set(cv2.CAP_PROP_POS_FRAMES, 0) # Loop video
-                    await asyncio.sleep(0.1) # Fix CPU freeze on corrupt frames
+                    time.sleep(0.1) # Fix CPU freeze on corrupt frames
                     continue
                     
                 frame = cv2.resize(frame, (640, 480))
-                self._process_frame(frame)
+                frame_count += 1
+                self._process_frame(frame, bg_subtractor, frame_count)
 
                 ret, buffer = cv2.imencode('.jpg', frame)
                 frame_bytes = buffer.tobytes()
@@ -84,17 +88,15 @@ class VideoProcessor:
                        b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
                 
                 # Control frame rate
-                await asyncio.sleep(0.04)
+                time.sleep(0.04)
         finally:
             cap.release()
 
-    def _process_frame(self, frame):
-        self.frame_count += 1
-        
+    def _process_frame(self, frame, bg_subtractor, frame_count):
         # 1. Advanced DL Processing (Throttled to prevent lag/freezing)
         if GLOBAL_DL_ENABLED and GLOBAL_DL_MODEL:
             # Predict only once every 30 frames (about once a second) to prevent video stream stutter
-            if self.frame_count % 30 == 0:
+            if frame_count % 30 == 0:
                 try:
                     # Resize to 128x128 as defined in training
                     input_frame = cv2.resize(frame, (128, 128))
@@ -117,7 +119,7 @@ class VideoProcessor:
                     pass
                     
         # 2. Always locate the moving objects (suspects) dynamically using OpenCV
-        fg_mask = self.bg_subtractor.apply(frame)
+        fg_mask = bg_subtractor.apply(frame)
         kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5))
         fg_mask = cv2.morphologyEx(fg_mask, cv2.MORPH_OPEN, kernel)
         contours, _ = cv2.findContours(fg_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
