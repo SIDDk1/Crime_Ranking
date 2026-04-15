@@ -30,7 +30,7 @@ const VideoFeed = () => {
       </div>
       <div className="video-wrapper">
         <img 
-          src={`${API_URL}/video_feed?camera=${activeCamera}`} 
+          src={`${API_URL}/video_feed?camera=${activeCamera}&cb=${Date.now()}`} 
           alt={`Live Security Feed Camera ${activeCamera}`} 
           className="live-video"
           key={activeCamera}
