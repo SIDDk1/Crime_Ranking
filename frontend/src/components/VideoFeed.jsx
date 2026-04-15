@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 
 const VideoFeed = () => {
   const [activeCamera, setActiveCamera] = useState(1);
-  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+  const API_URL = import.meta.env.VITE_API_URL || "https://crime-ranking.onrender.com";
 
   return (
     <div className="video-feed-container">
