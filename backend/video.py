@@ -38,16 +38,19 @@ class VideoProcessor:
         self.anomaly_detected = False
         self.last_log_time = 0
         self.anomaly_message = "MOTION ANOMALY DETECTED"
-        self.anomaly_detected = False
         self.detected_crime = None
+        self.current_frame_bytes = None
         
         with _model_lock:
             global GLOBAL_LOADING_STARTED
             if not GLOBAL_LOADING_STARTED:
                 GLOBAL_LOADING_STARTED = True
                 threading.Thread(target=_async_load_keras_model_singleton, daemon=True).start()
+                
+        # Start background processing thread immediately for 24/7 analysis
+        threading.Thread(target=self._run_continuous_processing, daemon=True).start()
 
-    def generate_frames(self):
+    def _run_continuous_processing(self):
         # Localize these variables purely to this specific stream connection so they don't corrupt in multi-threading
         bg_subtractor = cv2.createBackgroundSubtractorMOG2(history=50, varThreshold=50, detectShadows=False)
         frame_count = 0
@@ -63,9 +66,7 @@ class VideoProcessor:
                 self._process_frame(frame, bg_subtractor, frame_count)
                 
                 ret, buffer = cv2.imencode('.jpg', frame)
-                frame_bytes = buffer.tobytes()
-                yield (b'--frame\r\n'
-                       b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
+                self.current_frame_bytes = buffer.tobytes()
                 time.sleep(0.1)
 
         cap = cv2.VideoCapture(self.video_path)
@@ -82,42 +83,22 @@ class VideoProcessor:
                 self._process_frame(frame, bg_subtractor, frame_count)
 
                 ret, buffer = cv2.imencode('.jpg', frame)
-                frame_bytes = buffer.tobytes()
+                self.current_frame_bytes = buffer.tobytes()
 
-                yield (b'--frame\r\n'
-                       b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
-                
                 # Control frame rate
                 time.sleep(0.04)
         finally:
             cap.release()
 
+    def generate_frames(self):
+        """HTTP Streams use this to grab the latest actively processed frame natively."""
+        while True:
+            if self.current_frame_bytes:
+                yield (b'--frame\r\n'
+                       b'Content-Type: image/jpeg\r\n\r\n' + self.current_frame_bytes + b'\r\n')
+            time.sleep(0.05)
+
     def _process_frame(self, frame, bg_subtractor, frame_count):
-        # 1. Advanced DL Processing (Throttled to prevent lag/freezing)
-        if GLOBAL_DL_ENABLED and GLOBAL_DL_MODEL:
-            # Predict only once every 30 frames (about once a second) to prevent video stream stutter
-            if frame_count % 30 == 0:
-                try:
-                    # Resize to 128x128 as defined in training
-                    input_frame = cv2.resize(frame, (128, 128))
-                    input_frame = cv2.cvtColor(input_frame, cv2.COLOR_BGR2RGB)
-                    input_frame = np.expand_dims(input_frame, axis=0)
-                    input_frame = input_frame.astype('float32') / 255.0
-                    
-                    prediction = GLOBAL_DL_MODEL.predict(input_frame, verbose=0)
-                    class_idx = np.argmax(prediction[0])
-                    class_label = GLOBAL_IDX_TO_CLASS.get(str(class_idx), "normal").upper()
-                    
-                    # Confidence threshold check > 60%
-                    if class_label != "NORMAL" and np.max(prediction[0]) > 0.6:
-                        self.anomaly_detected = True
-                        self.detected_crime = class_label
-                        self.anomaly_message = f"{class_label} DETECTED"
-                    else:
-                        self.anomaly_detected = False
-                except Exception as e:
-                    pass
-                    
         # 2. Always locate the moving objects (suspects) dynamically using OpenCV
         fg_mask = bg_subtractor.apply(frame)
         kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5))
@@ -129,9 +110,39 @@ class VideoProcessor:
             if cv2.contourArea(contour) > 2000:
                 x, y, w, h = cv2.boundingRect(contour)
                 motion_boxes.append((x, y, w, h))
-
-        # 3. Handle Fallback if Deep Learning is missing
-        if not GLOBAL_DL_ENABLED:
+                
+        # 1. Advanced DL Processing (Throttled to prevent lag/freezing)
+        if GLOBAL_DL_ENABLED and GLOBAL_DL_MODEL:
+            # Predict more frequently (every 10 frames) for responsive UI
+            if frame_count % 10 == 0:
+                try:
+                    # Resize to 128x128 as defined in training
+                    input_frame = cv2.resize(frame, (128, 128))
+                    input_frame = cv2.cvtColor(input_frame, cv2.COLOR_BGR2RGB)
+                    input_frame = np.expand_dims(input_frame, axis=0)
+                    input_frame = input_frame.astype('float32') / 255.0
+                    
+                    prediction = GLOBAL_DL_MODEL.predict(input_frame, verbose=0)
+                    class_idx = np.argmax(prediction[0])
+                    class_label = GLOBAL_IDX_TO_CLASS.get(str(class_idx), "normal").upper()
+                    
+                    # Confidence threshold check > 35% for the demo
+                    if class_label != "NORMAL" and np.max(prediction[0]) > 0.35:
+                        self.anomaly_detected = True
+                        self.detected_crime = class_label
+                        self.anomaly_message = f"{class_label} DETECTED"
+                    else:
+                        # Fallback: Track normal large motion as suspicious if no explicit crime identified
+                        if len(motion_boxes) > 0:
+                            self.anomaly_detected = True
+                            self.detected_crime = "Suspicious Behavior"
+                            self.anomaly_message = "SUSPICIOUS BEHAVIOR TRACKED"
+                        else:
+                            self.anomaly_detected = False
+                except Exception as e:
+                    pass
+        else:
+            # 3. Handle Fallback if Deep Learning is missing
             if len(motion_boxes) > 0:
                 self.anomaly_detected = True
                 self.detected_crime = "Motion Anomaly"

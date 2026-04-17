@@ -517,3 +517,30 @@ body {
 
 .mt-4 { margin-top: 1.5rem; }
 
+/* AI Help Desk Chat Interface */
+.ai-helpdesk-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0, 0, 0, 0.6); backdrop-filter: blur(4px); display: flex; justify-content: center; align-items: center; z-index: 10000; }
+.ai-helpdesk-panel { width: 90%; max-width: 600px; max-height: 80vh; display: flex; flex-direction: column; background: var(--bg-panel); border: 1px solid var(--accent-blue); box-shadow: 0 10px 40px rgba(59, 130, 246, 0.2); padding: 0; }
+.ai-chat-header { display: flex; justify-content: space-between; align-items: center; padding: 1.5rem; border-bottom: 1px solid var(--border-color); background: rgba(59, 130, 246, 0.05); margin-bottom: 0; }
+.chat-messages { flex-grow: 1; padding: 1.5rem; overflow-y: auto; display: flex; flex-direction: column; gap: 1rem; }
+.chat-bubble-container { display: flex; gap: 1rem; align-items: flex-start; }
+.chat-bubble-container.user { flex-direction: row-reverse; }
+.chat-avatar { background: var(--glass-bg); border-radius: 50%; padding: 0.5rem; border: 1px solid var(--border-color); color: var(--text-muted); }
+.chat-bubble-container.user .chat-avatar { color: var(--text-main); background: rgba(59, 130, 246, 0.2); }
+.chat-bubble-container.model .chat-avatar { color: var(--accent-blue); background: rgba(59, 130, 246, 0.1); }
+.chat-bubble { max-width: 80%; padding: 1rem; border-radius: 12px; line-height: 1.5; white-space: pre-wrap; }
+.chat-bubble.user { background-color: var(--accent-blue); color: white; border-top-right-radius: 2px; }
+.chat-bubble.model { background-color: var(--glass-bg); border: 1px solid var(--border-color); border-top-left-radius: 2px; }
+.chat-bubble.writing { display: flex; gap: 4px; align-items: center; justify-content: center; padding: 1rem 1.5rem; }
+.chat-bubble .dot { width: 6px; height: 6px; background-color: var(--text-muted); border-radius: 50%; animation: bounce 1.4s infinite ease-in-out both; }
+.chat-bubble .dot:nth-child(1) { animation-delay: -0.32s; } .chat-bubble .dot:nth-child(2) { animation-delay: -0.16s; }
+@keyframes bounce { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
+.chat-input-area { display: flex; gap: 1rem; padding: 1.5rem; border-top: 1px solid var(--border-color); background: var(--bg-dark); border-bottom-left-radius: 16px; border-bottom-right-radius: 16px; }
+.chat-input-area textarea { flex-grow: 1; background: var(--glass-bg); border: 1px solid var(--border-color); color: var(--text-main); padding: 0.75rem 1rem; border-radius: 8px; resize: none; font-family: inherit; font-size: 1rem; }
+.chat-input-area textarea:focus { outline: none; border-color: var(--accent-blue); }
+.chat-input-area .send-btn { padding: 0 1.25rem; border-radius: 8px; }
+.chat-input-area .send-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* Force Hide Map Attributions from User POV */
+.leaflet-control-attribution {
+  display: none !important;
+}

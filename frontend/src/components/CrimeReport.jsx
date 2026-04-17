@@ -9,7 +9,7 @@ const CrimeReport = () => {
   }, []);
 
   const fetchReport = () => {
-    fetch('https://crime-ranking.onrender.com/api/generate-report')
+    fetch('http://localhost:8000/api/generate-report')
       .then(res => res.json())
       .then(data => setReport(data))
       .catch(err => console.error("Error fetching report:", err));
@@ -59,10 +59,6 @@ const CrimeReport = () => {
           </ul>
         )}
       </div>
-      
-      <button className="primary-btn mt-4">
-        <Download size={16} /> Export PDF
-      </button>
     </div>
   );
 };

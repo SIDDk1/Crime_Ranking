@@ -1,10 +1,10 @@
 import React from 'react';
 import { AlertCircle, X } from 'lucide-react';
 
-const AlertPopup = ({ message, onClose }) => {
+const AlertPopup = ({ message, onClose, onClick }) => {
   return (
     <div className="alert-popup-overlay">
-      <div className="alert-popup-box slide-down">
+      <div className="alert-popup-box slide-down" onClick={onClick} style={{ cursor: 'pointer' }}>
         <div className="alert-icon-container blinking-bg">
           <AlertCircle size={32} color="white" />
         </div>
@@ -12,7 +12,7 @@ const AlertPopup = ({ message, onClose }) => {
           <h4>POLICE ALERT</h4>
           <p>{message}</p>
         </div>
-        <button className="close-btn" onClick={onClose}><X size={20}/></button>
+        <button className="close-btn" onClick={(e) => { e.stopPropagation(); onClose(); }}><X size={20}/></button>
       </div>
     </div>
   );

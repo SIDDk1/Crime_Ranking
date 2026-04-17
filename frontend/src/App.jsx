@@ -4,6 +4,8 @@ import VideoFeed from './components/VideoFeed';
 import AlertPopup from './components/AlertPopup';
 import CrimeReport from './components/CrimeReport';
 import BuildingBackground from './components/BuildingBackground';
+import AIHelpDesk from './components/AIHelpDesk';
+import ReportExportModal from './components/ReportExportModal';
 import { Shield, AlertTriangle, LayoutDashboard, BrainCircuit, FileBarChart } from 'lucide-react';
 import './App.css';
 
@@ -11,10 +13,13 @@ function App() {
   const [areas, setAreas] = useState([]);
   const [alerts, setAlerts] = useState([]);
   const [currentAlert, setCurrentAlert] = useState(null);
+  const [isHelpDeskOpen, setIsHelpDeskOpen] = useState(false);
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  const [activeCamera, setActiveCamera] = useState(1);
 
   useEffect(() => {
     // 1. Fetch Area Data
-    fetch('https://crime-ranking.onrender.com/api/areas')
+    fetch('http://localhost:8000/api/areas')
       .then(res => res.json())
       .then(data => setAreas(data))
       .catch(err => console.error("Error fetching areas: ", err));
@@ -25,20 +30,20 @@ function App() {
 
   useEffect(() => {
     // 3. Listen for Real-Time Video Alerts via SSE
-    const eventSource = new EventSource('https://crime-ranking.onrender.com/api/alerts');
+    const eventSource = new EventSource('http://localhost:8000/api/alerts');
     
     eventSource.onmessage = (event) => {
       const data = JSON.parse(event.data);
       if (data.alert) {
-        triggerAlert(data.message);
+        triggerAlert(data.message, data.camera);
       }
     };
 
     return () => eventSource.close();
   }, []);
 
-  const triggerAlert = (message) => {
-    const newAlert = { id: Date.now(), msg: message, time: new Date().toLocaleTimeString() };
+  const triggerAlert = (message, cameraStr = 1) => {
+    const newAlert = { id: Date.now(), msg: message, time: new Date().toLocaleTimeString(), camera: parseInt(cameraStr) };
     setCurrentAlert(newAlert);
     setAlerts(prev => [newAlert, ...prev]);
     
@@ -53,19 +58,25 @@ function App() {
   return (
     <div className="app-container">
       <BuildingBackground />
-      {currentAlert && <AlertPopup message={currentAlert.msg} onClose={() => setCurrentAlert(null)} />}
+      {currentAlert && <AlertPopup 
+        message={currentAlert.msg} 
+        onClose={() => setCurrentAlert(null)} 
+        onClick={() => { setActiveCamera(currentAlert.camera || 1); setCurrentAlert(null); }} 
+      />}
+      {isHelpDeskOpen && <AIHelpDesk onClose={() => setIsHelpDeskOpen(false)} />}
+      {isReportModalOpen && <ReportExportModal onClose={() => setIsReportModalOpen(false)} />}
       
       {/* Sidebar */}
       <aside className="sidebar pulse-border">
         <div className="logo">
-          <Shield className="logo-icon" size={32} />
-          <h2>Aegis<span className="accent">Vision</span></h2>
+          <Shield className="logo-icon" size={32} style={{ flexShrink: 0 }} />
+          <h2 style={{ fontSize: '1.15rem', lineHeight: '1.2' }}>Crime <span className="accent">Detection & Alert</span></h2>
         </div>
         
         <nav className="nav-menu">
           <a href="#" className="active"><LayoutDashboard size={20} /> Dashboard</a>
-          <a href="#"><FileBarChart size={20} /> Reports</a>
-          <a href="#"><BrainCircuit size={20} /> AI Models</a>
+          <a href="#" onClick={(e) => { e.preventDefault(); setIsReportModalOpen(true); }}><FileBarChart size={20} /> Reports</a>
+          <a href="#" onClick={(e) => { e.preventDefault(); setIsHelpDeskOpen(true); }}><BrainCircuit size={20} /> AI Help Desk</a>
           <a href="#" className={activeAlertCount > 0 ? "text-red" : ""}><AlertTriangle size={20} /> Alert History {activeAlertCount > 0 && <span className="badge">{activeAlertCount}</span>}</a>
         </nav>
 
@@ -74,7 +85,7 @@ function App() {
           <ul className="log-list">
             {alerts.length === 0 ? <li className="empty-state">System Normal</li> :
               alerts.slice(0, 5).map(alert => (
-                <li key={alert.id} className="log-item critical">
+                <li key={alert.id} className="log-item critical" onClick={() => setActiveCamera(alert.camera || 1)} style={{ cursor: 'pointer' }}>
                   <span className="time">{alert.time}</span>
                   <p>{alert.msg}</p>
                 </li>
@@ -110,7 +121,7 @@ function App() {
               <h3>Live Video Analytics</h3>
               <p className="subtitle">OpenCV Anomaly Detection</p>
             </div>
-            <VideoFeed />
+            <VideoFeed activeCamera={activeCamera} setActiveCamera={setActiveCamera} />
           </div>
         </div>
         

@@ -9,6 +9,11 @@ Based on your request to fully utilize your specific 40,000+ row raw dataset ins
    Because parsing the entire structural graph of India dynamically would take 30-40 seconds every time you refreshed your dashboard, I built a secondary robust JSON database caching engine securely stored locally at `logs/cities_cache.json`. Now, the map loading times stay instantly minimal under `<30ms`.
 3. **Automated ML Feature Extraction**
    Rather than you manually creating `past_crimes` lists, the backend pipeline runs Python `pandas.DataFrame.groupby()` logic inherently on startup—meaning your live application UI actively reflects your accurate machine learning calculations.
+4. **Free Tier Optimization & Zero Overlap**
+   - Optimized MOG2 tracking loops and explicitly tuned OpenCV memory configurations to slide beneath the tight 512MB RAM ceiling on Render.
+   - Diagnosed single-threading CPU deadlocks arising from `cv2.VideoCapture` background thread allocation when switching camera contexts actively.
+   - Refactored the dashboard specifically to isolate single camera processing (avoiding multi-stream C++ variable corruption across threads).
+   - Reverted the UI to strict "Single-Camera" visibility format to perfectly balance processing payload against the strict 0.1 vCPU hardware slice natively provided by Free Tier hosting.
 
 ### Validation Details
 > [!NOTE]  

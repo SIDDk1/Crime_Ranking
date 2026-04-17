@@ -6,6 +6,18 @@ import asyncio
 import db
 import data_ingestor
 
+from pydantic import BaseModel
+import google.generativeai as genai
+import os
+from dotenv import load_dotenv
+
+# Load secret API keys from hidden .env
+load_dotenv()
+
+# Configure Gemini AI with the provided API key
+genai.configure(api_key=os.getenv("GEMINI_API_KEY", ""))
+model = genai.GenerativeModel('gemini-flash-latest')
+
 from model import get_danger_rank
 from video import VideoProcessor
 
@@ -86,22 +98,58 @@ async def video_feed(camera: int = 1):
 async def alert_stream():
     """Server-Sent Events endpoint to push alerts when ANY camera detects video anomaly."""
     async def event_generator():
-        last_alert_state = False
+        last_alert_states = {cam_id: False for cam_id in camera_processors.keys()}
         while True:
-            # Check if ANY of our 4 camera processors found something
-            current_alert_state = any(p.check_anomaly() for p in camera_processors.values())
+            for cam_id, processor in camera_processors.items():
+                current_state = processor.check_anomaly()
+                
+                # If changed from False to True, trigger an alert for this specific camera
+                if current_state and not last_alert_states[cam_id]:
+                    yield {
+                        "event": "message",
+                        "data": f'{{"alert": true, "message": "CRITICAL: Suspicious Activity Detected on CAM 0{cam_id}", "type": "video", "camera": {cam_id}}}'
+                    }
+                
+                last_alert_states[cam_id] = current_state
             
-            # If changed from False to True, trigger an alert to the frontend
-            if current_alert_state and not last_alert_state:
-                yield {
-                    "event": "message",
-                    "data": '{"alert": true, "message": "CRITICAL: Suspicious Activity Detected on Security System", "type": "video"}'
-                }
-            
-            last_alert_state = current_alert_state
             await asyncio.sleep(1) # Check every 1 second
 
     return EventSourceResponse(event_generator())
+
+class ChatMessage(BaseModel):
+    message: str
+
+@app.post("/api/chat")
+async def chat_endpoint(chat: ChatMessage):
+    """Handle chat messages for the AI Help Desk."""
+    try:
+        # Fetch current project data to use as context
+        areas = await get_areas()
+        context_data = "\n".join([
+            f"Area: {a.get('name', 'Unknown')}, Danger Rank: {a.get('danger_rank', 'Unknown')}, Density: {a.get('density', 'N/A')}, Past Crimes: {a.get('past_crimes', 'N/A')}" 
+            for a in areas
+        ])
+        
+        system_prompt = f"""
+You are the AI Help Desk assistant for the AegisVision Crime Ranking and Surveillance System.
+You must answer questions according to the project data ONLY. Do not invent data. If the user asks something outside the scope of this system or the data provided, apologize and clarify your purpose.
+
+Current System Data:
+{context_data}
+
+User Request: {chat.message}
+"""
+        response = model.generate_content(system_prompt)
+        return {"response": response.text}
+    except Exception as e:
+        print(f"Gemini API Error: {e}")
+        # Fallback Mock for Presentation if API quota is exceeded
+        mock_response = "I am currently running in Offline Presentation Mode because the AI API quota is exceeded.\n\n"
+        mock_response += "Based on our current dataset:\n"
+        for area in areas[:3]: # limit to 3 to not clutter
+            mock_response += f"- **{area.get('name', 'Unknown')}** has a Danger Rank of **{area.get('danger_rank', 'Unknown')}** with a density of {area.get('density', 'N/A')}.\n"
+        mock_response += "\nIf you are an admin, please check your Google Gemini billing plan!"
+        return {"response": mock_response}
 
 if __name__ == "__main__":
     import uvicorn
