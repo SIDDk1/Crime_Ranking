@@ -1,72 +1,47 @@
-import sqlite3
+import pymongo
+from pymongo import MongoClient
+from bson.objectid import ObjectId
 import datetime
-import os
 import hashlib
 import secrets
 
-DB_PATH = 'crime_logs.db'
+MONGO_URI = "mongodb://localhost:27017/"
+DB_NAME = "CrimeRankingDB"
+
+def get_db():
+    client = MongoClient(MONGO_URI)
+    return client[DB_NAME]
 
 def init_db():
-    conn = sqlite3.connect(DB_PATH)
-    c = conn.cursor()
-    c.execute('''
-        CREATE TABLE IF NOT EXISTS Crime_Logs (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            timestamp DATETIME,
-            crime_type TEXT,
-            frame_path TEXT
-        )
-    ''')
-    c.execute('''
-        CREATE TABLE IF NOT EXISTS Users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            full_name TEXT NOT NULL,
-            email TEXT UNIQUE NOT NULL,
-            password_hash TEXT NOT NULL,
-            role TEXT NOT NULL DEFAULT 'Operator',
-            created_at DATETIME NOT NULL
-        )
-    ''')
-    conn.commit()
-    conn.close()
-
+    db = get_db()
+    # MongoDB creates collections automatically, but we can ensure indexes
+    db.users.create_index("email", unique=True)
+    
 def log_anomaly(crime_type, frame_path):
-    conn = sqlite3.connect(DB_PATH)
-    c = conn.cursor()
+    db = get_db()
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    c.execute("INSERT INTO Crime_Logs (timestamp, crime_type, frame_path) VALUES (?, ?, ?)", 
-              (timestamp, crime_type, frame_path))
-    conn.commit()
-    conn.close()
+    db.crime_logs.insert_one({
+        "timestamp": timestamp,
+        "crime_type": crime_type,
+        "frame_path": frame_path
+    })
 
 def get_total_alerts():
-    conn = sqlite3.connect(DB_PATH)
-    c = conn.cursor()
-    c.execute("SELECT COUNT(*) FROM Crime_Logs")
-    count = c.fetchone()[0]
-    conn.close()
-    return count
+    db = get_db()
+    return db.crime_logs.count_documents({})
 
 def get_recent_alerts(limit=20):
-    conn = sqlite3.connect(DB_PATH)
-    c = conn.cursor()
-    c.execute(
-        """
-        SELECT id, timestamp, crime_type, frame_path
-        FROM Crime_Logs
-        ORDER BY datetime(timestamp) DESC, id DESC
-        LIMIT ?
-        """,
-        (limit,)
-    )
-    rows = c.fetchall()
-    conn.close()
+    db = get_db()
+    # Sort by timestamp DESC
+    cursor = db.crime_logs.find().sort("timestamp", -1).limit(limit)
+    rows = list(cursor)
+    
     return [
         {
-            "id": row[0],
-            "timestamp": row[1],
-            "crime_type": row[2],
-            "frame_path": row[3]
+            "id": str(row["_id"]),
+            "timestamp": row.get("timestamp", ""),
+            "crime_type": row.get("crime_type", ""),
+            "frame_path": row.get("frame_path", "")
         }
         for row in rows
     ]
@@ -75,69 +50,52 @@ def _hash_password(password):
     return hashlib.sha256(password.encode("utf-8")).hexdigest()
 
 def create_user(full_name, email, password, role="Operator"):
-    conn = sqlite3.connect(DB_PATH)
-    c = conn.cursor()
+    db = get_db()
     created_at = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     password_hash = _hash_password(password)
-    try:
-        c.execute(
-            """
-            INSERT INTO Users (full_name, email, password_hash, role, created_at)
-            VALUES (?, ?, ?, ?, ?)
-            """,
-            (full_name, email.lower().strip(), password_hash, role, created_at)
-        )
-        conn.commit()
-        user_id = c.lastrowid
-    finally:
-        conn.close()
-    return get_user_by_id(user_id)
+    
+    user_doc = {
+        "full_name": full_name,
+        "email": email.lower().strip(),
+        "password_hash": password_hash,
+        "role": role,
+        "created_at": created_at
+    }
+    
+    result = db.users.insert_one(user_doc)
+    return get_user_by_id(str(result.inserted_id))
 
 def get_user_by_email(email):
-    conn = sqlite3.connect(DB_PATH)
-    c = conn.cursor()
-    c.execute(
-        """
-        SELECT id, full_name, email, role, created_at, password_hash
-        FROM Users
-        WHERE email = ?
-        """,
-        (email.lower().strip(),)
-    )
-    row = c.fetchone()
-    conn.close()
-    if not row:
+    db = get_db()
+    user = db.users.find_one({"email": email.lower().strip()})
+    if not user:
         return None
     return {
-        "id": row[0],
-        "full_name": row[1],
-        "email": row[2],
-        "role": row[3],
-        "created_at": row[4],
-        "password_hash": row[5]
+        "id": str(user["_id"]),
+        "full_name": user.get("full_name", ""),
+        "email": user.get("email", ""),
+        "role": user.get("role", ""),
+        "created_at": user.get("created_at", ""),
+        "password_hash": user.get("password_hash", "")
     }
 
 def get_user_by_id(user_id):
-    conn = sqlite3.connect(DB_PATH)
-    c = conn.cursor()
-    c.execute(
-        """
-        SELECT id, full_name, email, role, created_at
-        FROM Users
-        WHERE id = ?
-        """,
-        (user_id,)
-    )
-    row = c.fetchone()
-    conn.close()
-    if not row:
+    db = get_db()
+    try:
+        obj_id = ObjectId(user_id)
+    except:
         return None
+        
+    user = db.users.find_one({"_id": obj_id})
+    if not user:
+        return None
+        
     return {
-        "id": row[0],
-        "full_name": row[1],
-        "email": row[2],
-        "role": row[3],
-        "created_at": row[4]
+        "id": str(user["_id"]),
+        "full_name": user.get("full_name", ""),
+        "email": user.get("email", ""),
+        "role": user.get("role", ""),
+        "created_at": user.get("created_at", "")
     }
 
 def verify_user(email, password):
@@ -155,26 +113,19 @@ def verify_user(email, password):
     }
 
 def list_users():
-    conn = sqlite3.connect(DB_PATH)
-    c = conn.cursor()
-    c.execute(
-        """
-        SELECT id, full_name, email, role, created_at
-        FROM Users
-        ORDER BY datetime(created_at) DESC, id DESC
-        """
-    )
-    rows = c.fetchall()
-    conn.close()
+    db = get_db()
+    cursor = db.users.find().sort("created_at", -1)
+    users = list(cursor)
+    
     return [
         {
-            "id": row[0],
-            "full_name": row[1],
-            "email": row[2],
-            "role": row[3],
-            "created_at": row[4]
+            "id": str(user["_id"]),
+            "full_name": user.get("full_name", ""),
+            "email": user.get("email", ""),
+            "role": user.get("role", ""),
+            "created_at": user.get("created_at", "")
         }
-        for row in rows
+        for user in users
     ]
 
 def issue_token(user_id):

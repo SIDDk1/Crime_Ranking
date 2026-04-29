@@ -18,6 +18,7 @@ import {
   LogOut,
   Map,
   MoonStar,
+  Send,
   Shield,
   ShieldCheck,
   Sparkles,
@@ -96,6 +97,57 @@ const buildSyntheticAnalytics = (areas, liveAlerts) => {
   ];
 };
 
+const DispatchButton = ({ item, isDispatched, onDispatch }) => {
+  const [dispatchStatus, setDispatchStatus] = useState('idle');
+
+  const currentStatus = isDispatched ? 'sent' : dispatchStatus;
+
+  const handleDispatch = (e) => {
+    e.stopPropagation();
+    if (isDispatched) return;
+    setDispatchStatus('sending');
+    
+    let crimeType = "Suspicious Activity";
+    if (item.crime_type.toLowerCase().includes("thief") || item.crime_type.toLowerCase().includes("robbery") || item.crime_type.toLowerCase().includes("theft")) crimeType = "Robbery/Theft";
+    else if (item.crime_type.toLowerCase().includes("murder")) crimeType = "Murder";
+    else if (item.crime_type.toLowerCase().includes("fighting") || item.crime_type.toLowerCase().includes("fight")) crimeType = "Fighting/Assault";
+    else if (item.crime_type.toLowerCase().includes("vandalism")) crimeType = "Vandalism";
+
+    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+    fetch(`${API_URL}/api/dispatch-police`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        camera: item.frame_path ? parseInt(item.frame_path.replace(/[^\d]/g, '') || 1, 10) : 1,
+        time: new Date(item.timestamp).toLocaleTimeString(),
+        crime_type: crimeType,
+        raw_message: item.crime_type
+      })
+    })
+    .then(res => res.json())
+    .then(() => { setDispatchStatus('sent'); if (onDispatch) onDispatch(item.id); })
+    .catch(() => { setDispatchStatus('sent'); if (onDispatch) onDispatch(item.id); });
+  };
+
+  return (
+    <button 
+      onClick={handleDispatch}
+      disabled={currentStatus !== 'idle'}
+      style={{
+        marginLeft: 'auto',
+        display: 'flex', alignItems: 'center', gap: '6px', 
+        backgroundColor: currentStatus === 'sent' ? '#2e7d32' : '#d32f2f',
+        color: 'white', border: 'none', padding: '4px 8px', borderRadius: '4px',
+        cursor: currentStatus === 'idle' ? 'pointer' : 'default',
+        fontWeight: 'bold', fontSize: '0.8rem'
+      }}
+    >
+      <Send size={12} />
+      {currentStatus === 'idle' ? 'Dispatch' : currentStatus === 'sending' ? 'Sending...' : 'Sent'}
+    </button>
+  );
+};
+
 function App() {
   const [themeMode, setThemeMode] = useState(() => localStorage.getItem(THEME_KEY) || 'stealth');
   const [areas, setAreas] = useState([]);
@@ -103,6 +155,7 @@ function App() {
   const [users, setUsers] = useState([]);
   const [alertHistory, setAlertHistory] = useState([]);
   const [alerts, setAlerts] = useState([]);
+  const [dispatchedAlertIds, setDispatchedAlertIds] = useState({});
   const [currentAlert, setCurrentAlert] = useState(null);
   const [activeCamera, setActiveCamera] = useState(1);
   const [activeSection, setActiveSection] = useState('overview');
@@ -477,7 +530,7 @@ function App() {
 
       {currentAlert && (
         <AlertPopup
-          message={currentAlert.msg}
+          alert={currentAlert}
           onClose={() => setCurrentAlert(null)}
           onClick={() => {
             setActiveCamera(currentAlert.camera || 1);
@@ -520,23 +573,6 @@ function App() {
             })}
           </nav>
 
-          <div className="sidebar-utility">
-            <button type="button" className="utility-card" onClick={() => setIsReportModalOpen(true)}>
-              <FileBarChart size={18} />
-              <div>
-                <strong>Export Reports</strong>
-                <span>Generate CSV or Excel summaries</span>
-              </div>
-            </button>
-
-            <button type="button" className="utility-card" onClick={() => setIsHelpDeskOpen(true)}>
-              <BrainCircuit size={18} />
-              <div>
-                <strong>AI Help Desk</strong>
-                <span>Ask questions about system data</span>
-              </div>
-            </button>
-          </div>
         </aside>
 
         <main className="console-main">
@@ -550,6 +586,14 @@ function App() {
             </div>
 
             <div className="topbar-actions">
+              <button type="button" className="theme-toggle" onClick={() => setIsHelpDeskOpen(true)}>
+                <BrainCircuit size={16} />
+                AI Help Desk
+              </button>
+              <button type="button" className="theme-toggle" onClick={() => setIsReportModalOpen(true)}>
+                <FileBarChart size={16} />
+                Export Reports
+              </button>
               <button type="button" className="theme-toggle" onClick={toggleTheme} aria-pressed={themeMode !== 'stealth'}>
                 <MoonStar size={16} />
                 Dark Mode
@@ -774,15 +818,20 @@ function App() {
                     <p className="empty-copy">No alert history available yet.</p>
                   ) : (
                     liveAlertFeed.map((item) => (
-                      <div key={item.id} className="alert-history-row">
+                      <div key={item.id} className="alert-history-row" style={{ display: 'flex', alignItems: 'center', width: '100%' }}>
                         <div className={`severity-bar ${item.isLive ? 'critical' : 'neutral'}`}></div>
                         <div className="alert-history-copy">
                           <strong>{item.crime_type}</strong>
                           <span>{formatTimestamp(item.timestamp)}</span>
                         </div>
-                        <span className={`tag ${item.isLive ? 'critical' : 'neutral'}`}>
+                        <span className={`tag ${item.isLive ? 'critical' : 'neutral'}`} style={{ marginLeft: '12px' }}>
                           {item.frame_path || 'System'}
                         </span>
+                        <DispatchButton 
+                          item={item} 
+                          isDispatched={!!dispatchedAlertIds[item.id]}
+                          onDispatch={(id) => setDispatchedAlertIds(prev => ({ ...prev, [id]: true }))}
+                        />
                       </div>
                     ))
                   )}

@@ -38,3 +38,4 @@ urllib3==2.6.3
 uvicorn==0.43.0
 tensorflow-cpu>=2.15.0
 python-dotenv
+pymongo

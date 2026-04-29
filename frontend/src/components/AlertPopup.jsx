@@ -1,7 +1,7 @@
 import React from 'react';
 import { AlertCircle, X } from 'lucide-react';
 
-const AlertPopup = ({ message, onClose, onClick }) => {
+const AlertPopup = ({ alert, onClose, onClick }) => {
   return (
     <div className="alert-popup-overlay">
       <div className="alert-popup-box slide-down" onClick={onClick} style={{ cursor: 'pointer' }}>
@@ -10,7 +10,7 @@ const AlertPopup = ({ message, onClose, onClick }) => {
         </div>
         <div className="alert-content">
           <h4>POLICE ALERT</h4>
-          <p>{message}</p>
+          <p>{alert.msg}</p>
         </div>
         <button className="close-btn" onClick={(e) => { e.stopPropagation(); onClose(); }}><X size={20}/></button>
       </div>
