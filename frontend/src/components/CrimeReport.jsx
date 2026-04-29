@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { FileText, MapPin, AlertOctagon, Download } from 'lucide-react';
 
 const CrimeReport = () => {
+  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
   const [report, setReport] = useState(null);
 
   useEffect(() => {
@@ -9,7 +10,7 @@ const CrimeReport = () => {
   }, []);
 
   const fetchReport = () => {
-    fetch('http://localhost:8000/api/generate-report')
+    fetch(`${API_URL}/api/generate-report`)
       .then(res => res.json())
       .then(data => setReport(data))
       .catch(err => console.error("Error fetching report:", err));

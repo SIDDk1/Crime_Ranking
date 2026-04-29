@@ -46,9 +46,9 @@ const VideoFeed = ({ activeCamera, setActiveCamera }) => {
             onClick={() => setActiveCamera(cam.id)}
             style={{
               padding: '6px 12px',
-              backgroundColor: activeCamera === cam.id ? 'var(--accent-blue)' : 'var(--glass-bg)',
-              color: activeCamera === cam.id ? 'white' : 'var(--text-muted)',
-              border: `1px solid ${activeCamera === cam.id ? 'var(--accent-blue)' : 'var(--border-color)'}`,
+              backgroundColor: activeCamera === cam.id ? 'var(--accent)' : 'var(--glass-bg)',
+              color: activeCamera === cam.id ? '#08100d' : 'var(--text-muted)',
+              border: `1px solid ${activeCamera === cam.id ? 'var(--accent)' : 'var(--border-color)'}`,
               borderRadius: '6px',
               cursor: 'pointer',
               fontWeight: 500,

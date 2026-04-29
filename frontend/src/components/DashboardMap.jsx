@@ -1,6 +1,23 @@
-import React from 'react';
-import { MapContainer, TileLayer, CircleMarker, Popup } from 'react-leaflet';
+import React, { useEffect } from 'react';
+import { MapContainer, TileLayer, CircleMarker, Popup, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
+
+const ResizeMap = () => {
+  const map = useMap();
+
+  useEffect(() => {
+    const refresh = () => map.invalidateSize();
+    const timeoutId = window.setTimeout(refresh, 120);
+    window.addEventListener('resize', refresh);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+      window.removeEventListener('resize', refresh);
+    };
+  }, [map]);
+
+  return null;
+};
 
 const DashboardMap = ({ areas }) => {
   const center = [28.6139, 77.2090]; // New Delhi / Regional Center
@@ -16,7 +33,14 @@ const DashboardMap = ({ areas }) => {
 
   return (
     <div className="map-container">
-      <MapContainer center={center} zoom={12} style={{ height: '100%', width: '100%', borderRadius: '12px' }} attributionControl={false}>
+      <MapContainer
+        center={center}
+        zoom={12}
+        scrollWheelZoom
+        style={{ height: '100%', width: '100%', borderRadius: '12px', minHeight: '520px' }}
+        attributionControl={false}
+      >
+        <ResizeMap />
         <TileLayer
           url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
         />

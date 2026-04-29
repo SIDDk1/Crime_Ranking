@@ -3,11 +3,12 @@ import { X, Download, FileText, FileSpreadsheet, FileDigit } from 'lucide-react'
 import * as XLSX from 'xlsx';
 
 const ReportExportModal = ({ onClose }) => {
+  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
   const [isExporting, setIsExporting] = useState(false);
 
   const fetchReportData = async () => {
     try {
-      const res = await fetch('http://localhost:8000/api/generate-report');
+      const res = await fetch(`${API_URL}/api/generate-report`);
       const data = await res.json();
       return data;
     } catch (err) {
@@ -52,7 +53,7 @@ const ReportExportModal = ({ onClose }) => {
   return (
     <div className="ai-helpdesk-overlay" onClick={onClose} style={{ zIndex: 10001 }}>
       <div className="panel" onClick={e => e.stopPropagation()} style={{ width: '400px', padding: '0', display: 'flex', flexDirection: 'column' }}>
-        <div className="panel-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.5rem', borderBottom: '1px solid var(--border-color)', background: 'rgba(59, 130, 246, 0.05)', marginBottom: 0 }}>
+        <div className="panel-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.5rem', borderBottom: '1px solid var(--border-color)', background: 'rgba(16, 185, 129, 0.05)', marginBottom: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <Download size={24} className="accent" />
             <h3>Export System Reports</h3>
@@ -69,7 +70,7 @@ const ReportExportModal = ({ onClose }) => {
             className="primary-btn" 
             onClick={() => handleExport('csv')} 
             disabled={isExporting}
-            style={{ backgroundColor: '#10b981', justifyContent: 'center', padding: '0.8rem' }}
+            style={{ justifyContent: 'center', padding: '0.8rem' }}
           >
             <FileText size={18} /> {isExporting ? 'Generating...' : 'Download as CSV'}
           </button>
@@ -78,7 +79,7 @@ const ReportExportModal = ({ onClose }) => {
             className="primary-btn" 
             onClick={() => handleExport('excel')} 
             disabled={isExporting}
-            style={{ backgroundColor: '#166534', justifyContent: 'center', padding: '0.8rem' }}
+            style={{ justifyContent: 'center', padding: '0.8rem' }}
           >
             <FileSpreadsheet size={18} /> {isExporting ? 'Generating...' : 'Download as Excel (.xlsx)'}
           </button>

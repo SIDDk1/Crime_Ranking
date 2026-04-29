@@ -2,12 +2,30 @@ import React, { useState, useRef, useEffect } from 'react';
 import { X, Send, Bot, User } from 'lucide-react';
 
 const AIHelpDesk = ({ onClose }) => {
-  const [messages, setMessages] = useState([
-    { role: 'model', text: 'Hello! I am the Crime Detection & Alert AI Help Desk. How can I assist you with the system data today?' }
-  ]);
+  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+  const [messages, setMessages] = useState(() => {
+    const saved = localStorage.getItem('ai_helpdesk_history');
+    if (saved) {
+      try { return JSON.parse(saved); } catch (e) {}
+    }
+    return [
+      { role: 'model', text: 'Hello! I am the Crime Detection & Alert AI Help Desk. How can I assist you with the system data today?' }
+    ];
+  });
+
+  useEffect(() => {
+    localStorage.setItem('ai_helpdesk_history', JSON.stringify(messages));
+  }, [messages]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef(null);
+  const inputRef = useRef(null);
+
+  useEffect(() => {
+    if (!isLoading && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [isLoading]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -27,7 +45,7 @@ const AIHelpDesk = ({ onClose }) => {
     setIsLoading(true);
 
     try {
-      const response = await fetch('http://localhost:8000/api/chat', {
+      const response = await fetch(`${API_URL}/api/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: userMessage }),
@@ -84,6 +102,8 @@ const AIHelpDesk = ({ onClose }) => {
 
         <div className="chat-input-area">
           <textarea 
+            ref={inputRef}
+            autoFocus
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}

@@ -6,7 +6,9 @@
   height: 100%;
   z-index: -1;
   overflow: hidden;
-  background: linear-gradient(180deg, #0a0e1a 0%, #1a1d2d 50%, #0f111a 100%);
+  background:
+    radial-gradient(circle at top left, rgba(16, 185, 129, 0.1), transparent 32%),
+    linear-gradient(180deg, #101010 0%, #151515 45%, #121212 100%);
 }
 
 .scene-container {
@@ -46,10 +48,10 @@
   height: calc(var(--height) * 1px);
   background: linear-gradient(
     180deg,
-    rgba(42, 63, 95, 0.95) 0%,
-    rgba(26, 45, 74, 0.9) 30%,
-    rgba(15, 25, 40, 0.85) 70%,
-    rgba(10, 15, 25, 0.8) 100%
+    rgba(54, 54, 54, 0.98) 0%,
+    rgba(38, 38, 38, 0.96) 30%,
+    rgba(24, 24, 24, 0.92) 70%,
+    rgba(18, 18, 18, 0.9) 100%
   );
   border: 1px solid rgba(255, 255, 255, 0.15);
   box-shadow: 
@@ -72,15 +74,15 @@
       0deg,
       transparent,
       transparent 15px,
-      rgba(255, 255, 255, 0.03) 15px,
-      rgba(255, 255, 255, 0.03) 16px
+      rgba(255, 255, 255, 0.025) 15px,
+      rgba(255, 255, 255, 0.025) 16px
     ),
     repeating-linear-gradient(
       90deg,
       transparent,
       transparent 20px,
-      rgba(255, 255, 255, 0.02) 20px,
-      rgba(255, 255, 255, 0.02) 21px
+      rgba(255, 255, 255, 0.015) 20px,
+      rgba(255, 255, 255, 0.015) 21px
     );
   pointer-events: none;
 }
@@ -95,8 +97,8 @@
   height: 100%;
   background: linear-gradient(
     90deg,
-    rgba(10, 15, 25, 0.9) 0%,
-    rgba(26, 45, 74, 0.7) 100%
+    rgba(18, 18, 18, 0.95) 0%,
+    rgba(54, 54, 54, 0.75) 100%
   );
   transform: rotateY(-90deg) translateZ(10px);
   transform-origin: right center;
@@ -113,15 +115,15 @@
       0deg,
       transparent,
       transparent 10px,
-      rgba(255, 200, 100, 0.25) 10px,
-      rgba(255, 200, 100, 0.25) 11px
+      rgba(16, 185, 129, 0.22) 10px,
+      rgba(16, 185, 129, 0.22) 11px
     ),
     repeating-linear-gradient(
       90deg,
       transparent,
       transparent 15px,
-      rgba(255, 200, 100, 0.15) 15px,
-      rgba(255, 200, 100, 0.15) 16px
+      rgba(16, 185, 129, 0.12) 15px,
+      rgba(16, 185, 129, 0.12) 16px
     );
 }
 
@@ -135,15 +137,15 @@
       0deg,
       transparent,
       transparent 12px,
-      rgba(100, 200, 255, 0.22) 12px,
-      rgba(100, 200, 255, 0.22) 13px
+      rgba(255, 255, 255, 0.18) 12px,
+      rgba(255, 255, 255, 0.18) 13px
     ),
     repeating-linear-gradient(
       90deg,
       transparent,
       transparent 18px,
-      rgba(100, 200, 255, 0.12) 18px,
-      rgba(100, 200, 255, 0.12) 19px
+      rgba(255, 255, 255, 0.08) 18px,
+      rgba(255, 255, 255, 0.08) 19px
     );
 }
 
@@ -271,9 +273,9 @@
   height: 100%;
   background: linear-gradient(
     135deg,
-    rgba(15, 17, 26, 0.85) 0%,
-    rgba(15, 17, 26, 0.65) 50%,
-    rgba(15, 17, 26, 0.75) 100%
+    rgba(18, 18, 18, 0.86) 0%,
+    rgba(18, 18, 18, 0.7) 50%,
+    rgba(18, 18, 18, 0.78) 100%
   );
   pointer-events: none;
   z-index: 1;

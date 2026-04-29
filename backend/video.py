@@ -37,7 +37,7 @@ class VideoProcessor:
         self.video_path = video_path
         self.anomaly_detected = False
         self.last_log_time = 0
-        self.anomaly_message = "MOTION ANOMALY DETECTED"
+        self.anomaly_message = "SUSPICIOUS ACTIVITY DETECTED"
         self.detected_crime = None
         self.current_frame_bytes = None
         
@@ -145,8 +145,8 @@ class VideoProcessor:
             # 3. Handle Fallback if Deep Learning is missing
             if len(motion_boxes) > 0:
                 self.anomaly_detected = True
-                self.detected_crime = "Motion Anomaly"
-                self.anomaly_message = "MOTION ANOMALY DETECTED"
+                self.detected_crime = "Suspicious Activity"
+                self.anomaly_message = "SUSPICIOUS ACTIVITY DETECTED"
             else:
                 self.anomaly_detected = False
 
