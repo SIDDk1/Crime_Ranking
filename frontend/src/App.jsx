@@ -8,7 +8,12 @@ import AIHelpDesk from './components/AIHelpDesk';
 import ReportExportModal from './components/ReportExportModal';
 import LandingPage from './components/LandingPage';
 import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer,
+  PieChart, Pie, Cell, LineChart, Line
+} from 'recharts';
+import {
   AlertTriangle,
+  ArrowLeft,
   BarChart3,
   Bell,
   BrainCircuit,
@@ -125,8 +130,22 @@ const DispatchButton = ({ item, isDispatched, onDispatch }) => {
       })
     })
     .then(res => res.json())
-    .then(() => { setDispatchStatus('sent'); if (onDispatch) onDispatch(item.id); })
-    .catch(() => { setDispatchStatus('sent'); if (onDispatch) onDispatch(item.id); });
+    .then(() => { 
+      setDispatchStatus('sent'); 
+      if (onDispatch) onDispatch(item.id); 
+      
+      const camId = item.frame_path ? parseInt(item.frame_path.replace(/[^\d]/g, '') || 1, 10) : 1;
+      const timeStr = new Date(item.timestamp).toLocaleTimeString();
+      window.alert(`🚨 SECURE DISPATCH CONFIRMED\n\nEmergency units have been deployed to intercept the suspects.\n\n📍 Location: Camera 0${camId} Zone\n⏰ Time: ${timeStr}\n⚠️ Incident: ${crimeType}\n📄 Details: ${item.crime_type}\n\nAll nearby units have received the automated telemetry data.`);
+    })
+    .catch(() => { 
+      setDispatchStatus('sent'); 
+      if (onDispatch) onDispatch(item.id); 
+      
+      const camId = item.frame_path ? parseInt(item.frame_path.replace(/[^\d]/g, '') || 1, 10) : 1;
+      const timeStr = new Date(item.timestamp).toLocaleTimeString();
+      window.alert(`🚨 SECURE DISPATCH CONFIRMED\n\nEmergency units have been deployed to intercept the suspects.\n\n📍 Location: Camera 0${camId} Zone\n⏰ Time: ${timeStr}\n⚠️ Incident: ${crimeType}\n📄 Details: ${item.crime_type}\n\nAll nearby units have received the automated telemetry data.`);
+    });
   };
 
   return (
@@ -361,7 +380,13 @@ function App() {
   };
 
   const sortedAreas = useMemo(() => (
-    [...areas].sort((left, right) => (riskOrder[right.danger_rank] || 0) - (riskOrder[left.danger_rank] || 0))
+    [...areas]
+      .filter(area => !area.name.toUpperCase().includes('TOTAL'))
+      .map(area => {
+        const total = (area.crime_keys || []).reduce((sum, key) => sum + (area[key] || 0), 0);
+        return { ...area, total_crimes: total };
+      })
+      .sort((left, right) => (riskOrder[right.danger_rank] || 0) - (riskOrder[left.danger_rank] || 0) || right.total_crimes - left.total_crimes)
   ), [areas]);
 
   const liveAlertFeed = useMemo(() => {
@@ -372,11 +397,23 @@ function App() {
       frame_path: `CAM 0${alert.camera}`,
       isLive: true
     }));
-    return [...sessionAlerts, ...alertHistory].slice(0, 12);
+    return [...sessionAlerts, ...alertHistory];
   }, [alertHistory, alerts]);
 
   const criticalAreas = sortedAreas.filter((area) => area.danger_rank === 'Worst');
   const analyticsSeries = buildSyntheticAnalytics(areas, alerts);
+  const analyticsBarData = [...areas]
+    .filter(area => !area.name.toUpperCase().includes('TOTAL'))
+    .map(area => {
+      const total = (area.crime_keys || []).reduce((sum, key) => sum + (area[key] || 0), 0);
+      return { ...area, total_crimes: total };
+    })
+    .sort((a, b) => b.total_crimes - a.total_crimes).slice(0, 10);
+  const analyticsPieData = [
+    { name: 'High Risk (Worst)', value: areas.filter(a => a.danger_rank === 'Worst').length, color: '#e11d48' },
+    { name: 'Medium Risk (Good)', value: areas.filter(a => a.danger_rank === 'Good').length, color: '#f59e0b' },
+    { name: 'Secure (Best)', value: areas.filter(a => a.danger_rank === 'Best').length, color: '#10b981' }
+  ].filter(d => d.value > 0);
   const topArea = sortedAreas[0];
   const totalAlerts = (report?.total_alerts || 0) + alerts.length;
 
@@ -392,7 +429,7 @@ function App() {
     );
   }
 
-  if (showLanding && !currentUser) {
+  if (showLanding) {
     return <LandingPage onNavigateToAuth={() => setShowLanding(false)} />;
   }
 
@@ -429,7 +466,15 @@ function App() {
           </section>
 
           <section className="auth-card">
-            <div className="auth-card-top">
+            <div className="auth-card-top" style={{ flexWrap: 'wrap', gap: '10px' }}>
+              <button 
+                type="button" 
+                className="theme-toggle" 
+                onClick={() => setShowLanding(true)}
+              >
+                <ArrowLeft size={16} />
+                Home Page
+              </button>
               <div className="auth-tabs">
                 <button
                   type="button"
@@ -586,6 +631,10 @@ function App() {
             </div>
 
             <div className="topbar-actions">
+              <button type="button" className="theme-toggle" onClick={() => setShowLanding(true)}>
+                <ArrowLeft size={16} />
+                Home Page
+              </button>
               <button type="button" className="theme-toggle" onClick={() => setIsHelpDeskOpen(true)}>
                 <BrainCircuit size={16} />
                 AI Help Desk
@@ -664,8 +713,10 @@ function App() {
                   <Sparkles size={18} />
                 </div>
                 <div className="summary-layout">
-                  <div className="summary-card">
-                    <h4>Priority Watchlist</h4>
+                  <div className="summary-card" style={{ maxHeight: '550px', overflowY: 'auto', overflowX: 'hidden', paddingRight: '12px' }}>
+                    <div style={{ position: 'sticky', top: '-18px', backgroundColor: 'var(--bg-surface)', padding: '18px 0 12px 0', zIndex: 10, borderBottom: '1px solid var(--line)' }}>
+                      <h4 style={{ margin: 0 }}>Priority Watchlist</h4>
+                    </div>
                     {criticalAreas.length === 0 ? (
                       <p className="empty-copy">No locations are currently ranked as worst.</p>
                     ) : (
@@ -673,7 +724,7 @@ function App() {
                         <div key={area.id} className="list-row">
                           <div>
                             <strong>{area.name}</strong>
-                            <span>{area.past_crimes || 0} prior incidents</span>
+                            <span>{area.total_crimes ? area.total_crimes.toLocaleString() : 0} prior incidents</span>
                           </div>
                           <span className="tag critical">{area.danger_rank}</span>
                         </div>
@@ -681,12 +732,14 @@ function App() {
                     )}
                   </div>
 
-                  <div className="summary-card">
-                    <h4>Recent Alert Queue</h4>
+                  <div className="summary-card" style={{ maxHeight: '550px', overflowY: 'auto', overflowX: 'hidden', paddingRight: '12px' }}>
+                    <div style={{ position: 'sticky', top: '-18px', backgroundColor: 'var(--bg-surface)', padding: '18px 0 12px 0', zIndex: 10, borderBottom: '1px solid var(--line)' }}>
+                      <h4 style={{ margin: 0 }}>Recent Alert Queue</h4>
+                    </div>
                     {liveAlertFeed.length === 0 ? (
-                      <p className="empty-copy">Alert history will appear here once activity is detected.</p>
+                      <p className="empty-copy" style={{ marginTop: '12px' }}>Alert history will appear here once activity is detected.</p>
                     ) : (
-                      liveAlertFeed.slice(0, 4).map((item) => (
+                      liveAlertFeed.map((item) => (
                         <div key={item.id} className="list-row">
                           <div>
                             <strong>{item.crime_type}</strong>
@@ -725,11 +778,29 @@ function App() {
                   </div>
                 </div>
                 <div className="stack-list">
-                  {sortedAreas.slice(0, 8).map((area) => (
+                  {[...areas]
+                    .filter(area => !area.name.toUpperCase().includes('TOTAL'))
+                    .map(area => {
+                      const total = (area.crime_keys || []).reduce((sum, key) => sum + (area[key] || 0), 0);
+                      
+                      let topCrimeName = 'N/A';
+                      let topCrimeValue = 0;
+                      (area.crime_keys || []).forEach(key => {
+                        if ((area[key] || 0) > topCrimeValue) {
+                          topCrimeValue = area[key];
+                          topCrimeName = key.charAt(0).toUpperCase() + key.slice(1).toLowerCase();
+                        }
+                      });
+
+                      return { ...area, total_crimes: total, top_crime_name: topCrimeName, top_crime_value: topCrimeValue };
+                    })
+                    .sort((a, b) => b.total_crimes - a.total_crimes)
+                    .slice(0, 8)
+                    .map((area) => (
                     <div key={area.id} className="list-row">
                       <div>
                         <strong>{area.name}</strong>
-                        <span>Density {area.density || 'N/A'} | Past crimes {area.past_crimes || 0}</span>
+                        <span>Total IPC Crimes: {area.total_crimes.toLocaleString()} | Top Offense: {area.top_crime_name} ({area.top_crime_value.toLocaleString()})</span>
                       </div>
                       <span className={`tag ${getDangerTone(area.danger_rank)}`}>{area.danger_rank}</span>
                     </div>
@@ -740,12 +811,12 @@ function App() {
           )}
 
           {activeSection === 'analytics' && (
-            <section className="single-section-layout">
-              <div className="panel">
+            <section style={{ display: 'flex', flexDirection: 'column', gap: '24px', paddingBottom: '40px' }}>
+              <div className="panel" style={{ margin: 0 }}>
                 <div className="panel-heading">
                   <div>
                     <p className="eyebrow-text">Performance View</p>
-                    <h3>System analytics</h3>
+                    <h3>System analytics overview</h3>
                   </div>
                 </div>
                 <div className="analytics-grid">
@@ -764,26 +835,86 @@ function App() {
                 </div>
               </div>
 
-              <div className="panel">
-                <div className="panel-heading">
-                  <div>
-                    <p className="eyebrow-text">Decision Support</p>
-                    <h3>Analyst notes</h3>
+              {/* Charts Row */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
+                <div className="panel" style={{ margin: 0 }}>
+                  <div className="panel-heading">
+                    <div>
+                      <p className="eyebrow-text">Demographics</p>
+                      <h3>Risk Distribution</h3>
+                    </div>
+                  </div>
+                  <div style={{ height: '350px', width: '100%', marginTop: '20px' }}>
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={analyticsPieData}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={80}
+                          outerRadius={120}
+                          paddingAngle={5}
+                          dataKey="value"
+                        >
+                          {analyticsPieData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.color} />
+                          ))}
+                        </Pie>
+                        <RechartsTooltip contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155', color: '#fff', borderRadius: '8px' }} />
+                        <Legend verticalAlign="bottom" height={36} iconType="circle" />
+                      </PieChart>
+                    </ResponsiveContainer>
                   </div>
                 </div>
-                <div className="insight-stack">
-                  <div className="insight-card">
-                    <strong>Camera response focus</strong>
-                    <p>Shift immediate operator attention toward cameras serving the highest ranked zones.</p>
+
+                <div className="panel" style={{ margin: 0 }}>
+                  <div className="panel-heading">
+                    <div>
+                      <p className="eyebrow-text">Region Density</p>
+                      <h3>Top 10 Highest Crime Regions</h3>
+                    </div>
                   </div>
-                  <div className="insight-card">
-                    <strong>Patrol recommendation</strong>
-                    <p>Use high-risk locations from the map section to prioritize physical patrol scheduling.</p>
+                  <div style={{ height: '350px', width: '100%', marginTop: '20px' }}>
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={analyticsBarData} margin={{ top: 20, right: 20, left: 0, bottom: 60 }}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} />
+                        <XAxis dataKey="name" stroke="#94a3b8" angle={-45} textAnchor="end" interval={0} tick={{fontSize: 11}} />
+                        <YAxis stroke="#94a3b8" tick={{fontSize: 12}} />
+                        <RechartsTooltip 
+                          cursor={{fill: '#1e293b'}} 
+                          contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #334155', color: '#fff', borderRadius: '8px' }} 
+                        />
+                        <Bar dataKey="total_crimes" name="Total Crimes" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
                   </div>
-                  <div className="insight-card">
-                    <strong>User administration</strong>
-                    <p>Restrict access to export and alert review functions to trusted admin users only.</p>
+                </div>
+              </div>
+
+              {/* Time Series Alert History */}
+              <div className="panel" style={{ margin: 0 }}>
+                <div className="panel-heading">
+                  <div>
+                    <p className="eyebrow-text">Live Surveillance</p>
+                    <h3>Real-Time Alerts Timeline</h3>
                   </div>
+                </div>
+                <div style={{ height: '300px', width: '100%', marginTop: '20px' }}>
+                  {alerts.length > 0 ? (
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={alerts.map((a, i) => ({ time: formatTimestamp(a.timestamp).split(' ')[1] || `T-${i}`, type: a.crime_type, count: i + 1 }))} margin={{ top: 20, right: 20, left: 0, bottom: 20 }}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} />
+                        <XAxis dataKey="time" stroke="#94a3b8" tick={{fontSize: 12}} />
+                        <YAxis stroke="#94a3b8" tick={{fontSize: 12}} />
+                        <RechartsTooltip contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #334155', color: '#fff', borderRadius: '8px' }} />
+                        <Line type="monotone" dataKey="count" name="Cumulative Alerts" stroke="#e11d48" strokeWidth={3} dot={{ r: 4, fill: '#e11d48' }} activeDot={{ r: 6 }} />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  ) : (
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#94a3b8' }}>
+                      No active alerts to plot yet.
+                    </div>
+                  )}
                 </div>
               </div>
             </section>
@@ -813,7 +944,7 @@ function App() {
                     <h3>Alerts and escalation history</h3>
                   </div>
                 </div>
-                <div className="stack-list">
+                <div className="stack-list" style={{ maxHeight: 'calc(100vh - 280px)', overflowY: 'auto', paddingRight: '16px' }}>
                   {liveAlertFeed.length === 0 ? (
                     <p className="empty-copy">No alert history available yet.</p>
                   ) : (

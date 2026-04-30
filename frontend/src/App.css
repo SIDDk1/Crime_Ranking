@@ -622,6 +622,7 @@ button {
 
 .content-grid {
   grid-template-columns: 1.05fr 1.2fr;
+  align-items: start;
 }
 
 .single-section-layout {
@@ -648,6 +649,7 @@ button {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 14px;
+  align-content: start;
 }
 
 .stat-tile {
@@ -679,6 +681,7 @@ button {
 
 .summary-layout {
   grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
 }
 
 .summary-card,
@@ -1294,4 +1297,25 @@ button {
   .chat-bubble {
     max-width: 100%;
   }
+}
+
+/* Custom Theme Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--accent);
+  border-radius: 8px;
+  opacity: 0.8;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-strong);
 }

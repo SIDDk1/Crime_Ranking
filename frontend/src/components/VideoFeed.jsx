@@ -16,7 +16,7 @@ const VideoFeed = ({ activeCamera, setActiveCamera }) => {
     <div className="video-feed-container">
       <div className="video-wrapper">
         <img 
-          src={`${API_URL}/video_feed?camera=${activeCamera}&cb=${Date.now()}`} 
+          src={`${API_URL}/video_feed?camera=${activeCamera}`} 
           alt={`Live Security Feed Camera ${activeCamera}`} 
           className="live-video"
           onError={(e) => {
