@@ -38,13 +38,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Initialize multiple camera processors mapped to IDs (Shared AI Model handles memory)
-camera_processors = {
-    1: VideoProcessor('demo_video.mp4'),
-    2: VideoProcessor('demo_video_2.mp4'),
-    3: VideoProcessor('demo_video_3.mp4'),
-    4: VideoProcessor('demo_video_4.mp4')
-}
+# Lazy-load camera processors to prevent Render Free Tier Out Of Memory (OOM) Crash!
+camera_processors = {}
+
+def get_processor(camera_id):
+    if camera_id not in camera_processors:
+        paths = {1: 'demo_video.mp4', 2: 'demo_video_2.mp4', 3: 'demo_video_3.mp4', 4: 'demo_video_4.mp4'}
+        camera_processors[camera_id] = VideoProcessor(paths.get(camera_id, 'demo_video.mp4'))
+    return camera_processors[camera_id]
 
 # 1. Area Ranking Data Endpoint
 @app.get("/api/areas")
@@ -111,8 +112,8 @@ async def generate_report():
 @app.get("/video_feed")
 async def video_feed(camera: int = 1):
     """Stream OpenCV processed video frames targeting a specific camera."""
-    # Retrieve the correct active camera, default to 1 if out of bounds
-    processor = camera_processors.get(camera, camera_processors[1])
+    # Retrieve the correct active camera, lazily loading it to save memory
+    processor = get_processor(camera)
     return StreamingResponse(processor.generate_frames(), media_type="multipart/x-mixed-replace; boundary=frame")
 
 # 3. Real-time Alerts Notification Endpoint (SSE)
@@ -121,10 +122,18 @@ async def alert_stream():
     """Server-Sent Events endpoint to push alerts when ANY camera detects video anomaly."""
     async def event_generator():
         import time
-        last_alert_times = {cam_id: 0 for cam_id in camera_processors.keys()}
+        # Force boot camera 1 to ensure at least one background alert stream is running
+        if not camera_processors:
+            get_processor(1)
+            
+        last_alert_times = {}
         while True:
             current_time = time.time()
-            for cam_id, processor in camera_processors.items():
+            # Iterate safely over actively loaded cameras
+            for cam_id, processor in list(camera_processors.items()):
+                if cam_id not in last_alert_times:
+                    last_alert_times[cam_id] = 0
+                    
                 current_state = processor.check_anomaly()
                 
                 # Trigger an alert if there's an anomaly AND 30 seconds have passed since the last alert for this camera

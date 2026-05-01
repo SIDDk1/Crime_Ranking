@@ -5,7 +5,9 @@ import datetime
 import hashlib
 import secrets
 
-MONGO_URI = "mongodb://localhost:27017/"
+import os
+
+MONGO_URI = os.environ.get("MONGO_URI", "mongodb://localhost:27017/?serverSelectionTimeoutMS=2000")
 DB_NAME = "CrimeRankingDB"
 
 def get_db():
@@ -13,18 +15,25 @@ def get_db():
     return client[DB_NAME]
 
 def init_db():
-    db = get_db()
-    # MongoDB creates collections automatically, but we can ensure indexes
-    db.users.create_index("email", unique=True)
+    try:
+        db = get_db()
+        db.users.create_index("email", unique=True)
+        # Force a quick connection test to trigger the fast timeout if missing
+        db.command("ping")
+    except Exception as e:
+        print(f"\n[WARNING] MongoDB Connection Failed: {e}\n[WARNING] The app will run, but database features (Login, History) will not work without MONGO_URI.\n")
     
 def log_anomaly(crime_type, frame_path):
-    db = get_db()
-    timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    db.crime_logs.insert_one({
-        "timestamp": timestamp,
-        "crime_type": crime_type,
-        "frame_path": frame_path
-    })
+    try:
+        db = get_db()
+        timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        db.crime_logs.insert_one({
+            "timestamp": timestamp,
+            "crime_type": crime_type,
+            "frame_path": frame_path
+        })
+    except Exception:
+        pass # Ignore db errors silently to keep video loop fast
 
 def get_total_alerts():
     db = get_db()
