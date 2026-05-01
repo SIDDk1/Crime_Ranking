@@ -14,6 +14,16 @@ GLOBAL_DL_ENABLED = False
 GLOBAL_LOADING_STARTED = False
 _model_lock = threading.Lock()
 
+
+def _normalize_anomaly_label(label):
+    label_text = str(label or "").strip()
+    label_upper = label_text.upper()
+    if "FIGHT" in label_upper:
+        return "Critical Incident"
+    if "CRITICAL INCIDENT" in label_upper:
+        return "Critical Incident"
+    return label_text.title() if label_text else "Critical Incident"
+
 def _async_load_keras_model_singleton():
     """Asynchronously boots TensorFlow globally so FastAPI connects instantly."""
     global GLOBAL_DL_MODEL, GLOBAL_IDX_TO_CLASS, GLOBAL_DL_ENABLED
@@ -25,7 +35,7 @@ def _async_load_keras_model_singleton():
                 with open('class_mapping.json', 'r') as f:
                     GLOBAL_IDX_TO_CLASS = json.load(f)
             else:
-                GLOBAL_IDX_TO_CLASS = {"0": "normal", "1": "fight", "2": "robbery", "3": "vandalism"}
+                GLOBAL_IDX_TO_CLASS = {"0": "normal", "1": "critical incident", "2": "robbery", "3": "vandalism"}
             
             GLOBAL_DL_ENABLED = True
             print("\n[SUCCESS] Deep Learning Model successfully loaded globally! All cameras now have AI context.")
@@ -72,12 +82,13 @@ class VideoProcessor:
                     
                     class_idx = np.argmax(prediction_array[0])
                     max_conf = np.max(prediction_array[0])
-                    class_label = GLOBAL_IDX_TO_CLASS.get(str(class_idx), "normal").upper()
+                    class_label = GLOBAL_IDX_TO_CLASS.get(str(class_idx), "normal")
+                    normalized_label = _normalize_anomaly_label(class_label)
                     
-                    if class_label != "NORMAL" and max_conf > 0.85:
+                    if normalized_label.lower() != "normal" and max_conf > 0.85:
                         self.anomaly_detected = True
-                        self.detected_crime = class_label
-                        self.anomaly_message = f"{class_label} DETECTED ({int(max_conf*100)}%)"
+                        self.detected_crime = normalized_label
+                        self.anomaly_message = f"{normalized_label.upper()} DETECTED ({int(max_conf*100)}%)"
                     else:
                         self.anomaly_detected = False
                 except Exception as e:
@@ -120,8 +131,8 @@ class VideoProcessor:
                 ret, buffer = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, 60])
                 self.current_frame_bytes = buffer.tobytes()
 
-                # Control frame rate dynamically to avoid blocking CPU (target 60fps)
-                time.sleep(0.015)
+                # Control frame rate dynamically to avoid blocking CPU (target 30fps)
+                time.sleep(0.033)
         finally:
             cap.release()
 
@@ -133,14 +144,14 @@ class VideoProcessor:
                 last_yielded_bytes = self.current_frame_bytes
                 yield (b'--frame\r\n'
                        b'Content-Type: image/jpeg\r\n\r\n' + self.current_frame_bytes + b'\r\n')
-            # 60fps max polling to match browser render limits perfectly and prevent HTTP backup
-            time.sleep(0.015)
+            # 30fps max polling to match browser render limits perfectly and prevent HTTP backup
+            time.sleep(0.033)
 
     def _process_frame(self, frame, bg_subtractor, frame_count):
         if not hasattr(self, 'last_motion_boxes'):
             self.last_motion_boxes = []
             
-        # 2. Only run heavy background subtraction every 3 frames for 60FPS performance
+        # 2. Only run heavy background subtraction every 3 frames for 30FPS performance
         if frame_count % 3 == 0:
             fg_mask = bg_subtractor.apply(frame)
             kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5))
@@ -165,8 +176,8 @@ class VideoProcessor:
             # 3. Handle Fallback if Deep Learning is missing
             if len(motion_boxes) > 0:
                 self.anomaly_detected = True
-                self.detected_crime = "Suspicious Activity"
-                self.anomaly_message = "SUSPICIOUS ACTIVITY DETECTED"
+                self.detected_crime = "Critical Incident"
+                self.anomaly_message = "CRITICAL INCIDENT DETECTED"
             else:
                 self.anomaly_detected = False
 

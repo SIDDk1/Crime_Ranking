@@ -1,0 +1,23 @@
+{
+  "_attribution": "Pune district taluk polygons PENDING — authoritative source not yet fetched. Intended sources (in order of preference): (1) datameet/maps under OGL India license — https://github.com/datameet/maps/tree/master/maps/District; (2) geohacker/india — https://github.com/geohacker/india; (3) OpenStreetMap Overpass API under ODbL attribution. Stub file exists so TalukMap component loads valid JSON (empty FeatureCollection) and falls back to 'coverage: missing' instead of 404.",
+  "_fetched_at": null,
+  "_expected_features": 14,
+  "_expected_taluks": [
+    "Pune City",
+    "Haveli",
+    "Khed",
+    "Junnar",
+    "Ambegaon",
+    "Maval",
+    "Mulshi",
+    "Shirur",
+    "Purandar",
+    "Velhe",
+    "Bhor",
+    "Baramati",
+    "Indapur",
+    "Daund"
+  ],
+  "type": "FeatureCollection",
+  "features": []
+}

@@ -1,0 +1,37 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": { "name": "Lucknow City", "slug": "lucknow-city", "nameLocal": "लखनऊ शहर", "area": 350, "population": 2800000 },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[80.880,26.800],[80.880,26.920],[81.020,26.920],[81.020,26.800],[80.880,26.800]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "Mohanlalganj", "slug": "mohanlalganj", "nameLocal": "मोहनलालगंज", "area": 720, "population": 680000 },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[80.780,26.650],[80.780,26.800],[80.980,26.800],[80.980,26.650],[80.780,26.650]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "Malihabad", "slug": "malihabad", "nameLocal": "मलिहाबाद", "area": 680, "population": 520000 },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[80.680,26.850],[80.680,27.000],[80.880,27.000],[80.880,26.850],[80.680,26.850]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "Bakshi Ka Talab", "slug": "bakshi-ka-talab", "nameLocal": "बख्शी का तालाब", "area": 778, "population": 589838 },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[80.880,26.920],[80.880,27.080],[81.100,27.080],[81.100,26.920],[80.880,26.920]]]
+      }
+    }
+  ]
+}

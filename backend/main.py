@@ -19,6 +19,9 @@ import requests
 # Load secret API keys from hidden .env
 load_dotenv()
 
+OLLAMA_URL = os.getenv("OLLAMA_URL", "http://127.0.0.1:11434")
+OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "qwen2.5-coder:1.5b")
+
 from model import get_danger_rank
 from video import VideoProcessor
 
@@ -70,6 +73,8 @@ async def get_areas():
                 
         if feature_values:
             area["danger_rank"] = get_danger_rank(feature_values)
+            area["past_crimes"] = sum(feature_values)
+            area["density"] = int(sum(feature_values) * 12) + 3000
         else:
             area["danger_rank"] = "Unknown"
             
@@ -141,7 +146,7 @@ async def alert_stream():
                     last_alert_times[cam_id] = current_time
                     yield {
                         "event": "message",
-                        "data": f'{{"alert": true, "message": "CRITICAL: Suspicious Activity Detected on CAM 0{cam_id}", "type": "video", "camera": {cam_id}}}'
+                        "data": f'{{"alert": true, "message": "CRITICAL INCIDENT DETECTED on CAM 0{cam_id}", "type": "video", "camera": {cam_id}}}'
                     }
             
             await asyncio.sleep(1) # Check every 1 second
@@ -236,12 +241,12 @@ Current System Data:
 User Request: {chat.message}
 """
         payload = {
-            "model": "qwen2.5-coder:1.5b",
+            "model": OLLAMA_MODEL,
             "prompt": system_prompt,
             "stream": False
         }
         
-        response = requests.post("http://localhost:11434/api/generate", json=payload, timeout=60)
+        response = requests.post(f"{OLLAMA_URL}/api/generate", json=payload, timeout=60)
         response.raise_for_status()
         
         data = response.json()

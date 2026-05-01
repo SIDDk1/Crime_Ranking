@@ -1,0 +1,37 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": { "name": "Chennai North", "slug": "chennai-north", "nameLocal": "வடக்கு சென்னை", "area": 110, "population": 2100000 },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[80.220,13.120],[80.220,13.180],[80.310,13.180],[80.310,13.120],[80.220,13.120]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "Chennai Central", "slug": "chennai-central", "nameLocal": "மத்திய சென்னை", "area": 86, "population": 1500000 },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[80.200,13.040],[80.200,13.120],[80.280,13.120],[80.280,13.040],[80.200,13.040]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "Chennai South", "slug": "chennai-south", "nameLocal": "தெற்கு சென்னை", "area": 130, "population": 2300000 },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[80.180,12.920],[80.180,13.040],[80.280,13.040],[80.280,12.920],[80.180,12.920]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "Chennai West", "slug": "chennai-west", "nameLocal": "மேற்கு சென்னை", "area": 100, "population": 1188000 },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[80.100,13.020],[80.100,13.120],[80.200,13.120],[80.200,13.020],[80.100,13.020]]]
+      }
+    }
+  ]
+}

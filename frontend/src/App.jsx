@@ -7,6 +7,7 @@ import BuildingBackground from './components/BuildingBackground';
 import AIHelpDesk from './components/AIHelpDesk';
 import ReportExportModal from './components/ReportExportModal';
 import LandingPage from './components/LandingPage';
+import AISearch from './components/AISearch';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer,
   PieChart, Pie, Cell, LineChart, Line
@@ -38,6 +39,7 @@ const THEME_KEY = 'crime_console_theme';
 
 const navigation = [
   { id: 'overview', label: 'Admin Dashboard', icon: LayoutDashboard },
+  { id: 'ai_search', label: 'City Record', icon: BrainCircuit },
   { id: 'map', label: 'Map', icon: Map },
   { id: 'analytics', label: 'Analytics', icon: BarChart3 },
   { id: 'cameras', label: 'Cameras', icon: Camera },
@@ -66,6 +68,14 @@ const formatTimestamp = (value) => {
   if (!value) return 'Now';
   const date = new Date(value);
   return Number.isNaN(date.getTime()) ? value : date.toLocaleString();
+};
+
+const formatCrimeLabel = (value) => {
+  const label = String(value || '').toLowerCase();
+  if (label.includes('fight') || label.includes('fighting')) {
+    return 'Critical Incident';
+  }
+  return value || 'Critical Incident';
 };
 
 const buildSyntheticAnalytics = (areas, liveAlerts) => {
@@ -112,11 +122,11 @@ const DispatchButton = ({ item, isDispatched, onDispatch }) => {
     if (isDispatched) return;
     setDispatchStatus('sending');
     
-    let crimeType = "Suspicious Activity";
+    let crimeType = "Critical Incident";
     if (item.crime_type.toLowerCase().includes("thief") || item.crime_type.toLowerCase().includes("robbery") || item.crime_type.toLowerCase().includes("theft")) crimeType = "Robbery/Theft";
     else if (item.crime_type.toLowerCase().includes("murder")) crimeType = "Murder";
-    else if (item.crime_type.toLowerCase().includes("fighting") || item.crime_type.toLowerCase().includes("fight")) crimeType = "Fighting/Assault";
     else if (item.crime_type.toLowerCase().includes("vandalism")) crimeType = "Vandalism";
+    else if (item.crime_type.toLowerCase().includes("fighting") || item.crime_type.toLowerCase().includes("fight")) crimeType = "Critical Incident";
 
     const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
     fetch(`${API_URL}/api/dispatch-police`, {
@@ -180,7 +190,7 @@ function App() {
   const [activeSection, setActiveSection] = useState('overview');
   const [isHelpDeskOpen, setIsHelpDeskOpen] = useState(false);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
-  const [showLanding, setShowLanding] = useState(!localStorage.getItem(TOKEN_KEY));
+  const [showLanding, setShowLanding] = useState(true);
   const [authMode, setAuthMode] = useState('register');
   const [authForm, setAuthForm] = useState({
     fullName: '',
@@ -417,6 +427,10 @@ function App() {
   const topArea = sortedAreas[0];
   const totalAlerts = (report?.total_alerts || 0) + alerts.length;
 
+  if (showLanding) {
+    return <LandingPage onNavigateToAuth={() => setShowLanding(false)} />;
+  }
+
   if (authLoading) {
     return (
       <div className="auth-loading-screen">
@@ -427,10 +441,6 @@ function App() {
         </div>
       </div>
     );
-  }
-
-  if (showLanding) {
-    return <LandingPage onNavigateToAuth={() => setShowLanding(false)} />;
   }
 
   if (!currentUser) {
@@ -603,6 +613,54 @@ function App() {
             {navigation.map((item) => {
               const Icon = item.icon;
               const isActive = activeSection === item.id;
+
+              if (item.id === 'overview') {
+                return (
+                  <React.Fragment key="overview-with-help">
+                    <button
+                      type="button"
+                      className={`nav-item ${isActive ? 'active' : ''}`}
+                      onClick={() => setActiveSection(item.id)}
+                    >
+                      <Icon size={18} />
+                      <span>{item.label}</span>
+                    </button>
+                    <button
+                      type="button"
+                      className="nav-item"
+                      onClick={() => setIsHelpDeskOpen(true)}
+                    >
+                      <BrainCircuit size={18} />
+                      <span>AI Help Desk</span>
+                    </button>
+                  </React.Fragment>
+                );
+              }
+
+              if (item.id === 'profile') {
+                return (
+                  <React.Fragment key="profile-with-export">
+                    <button
+                      type="button"
+                      className="nav-item"
+                      onClick={() => setIsReportModalOpen(true)}
+                    >
+                      <FileBarChart size={18} />
+                      <span>Export Reports</span>
+                    </button>
+                    <button
+                      type="button"
+                      key={item.id}
+                      className={`nav-item ${isActive ? 'active' : ''}`}
+                      onClick={() => setActiveSection(item.id)}
+                    >
+                      <Icon size={18} />
+                      <span>{item.label}</span>
+                    </button>
+                  </React.Fragment>
+                );
+              }
+
               return (
                 <button
                   type="button"
@@ -634,14 +692,6 @@ function App() {
               <button type="button" className="theme-toggle" onClick={() => setShowLanding(true)}>
                 <ArrowLeft size={16} />
                 Home Page
-              </button>
-              <button type="button" className="theme-toggle" onClick={() => setIsHelpDeskOpen(true)}>
-                <BrainCircuit size={16} />
-                AI Help Desk
-              </button>
-              <button type="button" className="theme-toggle" onClick={() => setIsReportModalOpen(true)}>
-                <FileBarChart size={16} />
-                Export Reports
               </button>
               <button type="button" className="theme-toggle" onClick={toggleTheme} aria-pressed={themeMode !== 'stealth'}>
                 <MoonStar size={16} />
@@ -742,7 +792,7 @@ function App() {
                       liveAlertFeed.map((item) => (
                         <div key={item.id} className="list-row">
                           <div>
-                            <strong>{item.crime_type}</strong>
+                        <strong>{formatCrimeLabel(item.crime_type)}</strong>
                             <span>{formatTimestamp(item.timestamp)}</span>
                           </div>
                           <span className={`tag ${item.isLive ? 'critical' : 'neutral'}`}>
@@ -755,6 +805,10 @@ function App() {
                 </div>
               </div>
             </section>
+          )}
+
+          {activeSection === 'ai_search' && (
+            <AISearch areas={areas} />
           )}
 
           {activeSection === 'map' && (
@@ -952,7 +1006,7 @@ function App() {
                       <div key={item.id} className="alert-history-row" style={{ display: 'flex', alignItems: 'center', width: '100%' }}>
                         <div className={`severity-bar ${item.isLive ? 'critical' : 'neutral'}`}></div>
                         <div className="alert-history-copy">
-                          <strong>{item.crime_type}</strong>
+                            <strong>{formatCrimeLabel(item.crime_type)}</strong>
                           <span>{formatTimestamp(item.timestamp)}</span>
                         </div>
                         <span className={`tag ${item.isLive ? 'critical' : 'neutral'}`} style={{ marginLeft: '12px' }}>

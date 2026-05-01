@@ -1,0 +1,29 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": { "name": "Connaught Place", "slug": "connaught-place", "nameLocal": "कनॉट प्लेस", "area": 12, "population": 350000 },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[77.195,28.640],[77.195,28.660],[77.230,28.660],[77.230,28.640],[77.195,28.640]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "Chanakyapuri", "slug": "chanakyapuri", "nameLocal": "चाणक्यपुरी", "area": 11, "population": 280000 },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[77.165,28.585],[77.165,28.640],[77.195,28.640],[77.195,28.585],[77.165,28.585]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "Lodhi Road", "slug": "lodhi-road", "nameLocal": "लोधी रोड", "area": 12, "population": 543000 },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[77.195,28.575],[77.195,28.640],[77.250,28.640],[77.250,28.575],[77.195,28.575]]]
+      }
+    }
+  ]
+}

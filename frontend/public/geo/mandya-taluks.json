@@ -1,0 +1,61 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": { "name": "K R Pete", "nameLocal": "ಕೆ.ಆರ್. ಪೇಟೆ", "area": 667, "population": 346000 },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[76.32,12.72],[76.32,13.05],[76.72,13.05],[76.72,12.72],[76.32,12.72]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "Nagamangala", "nameLocal": "ನಾಗಮಂಗಲ", "area": 562, "population": 310000 },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[76.72,12.72],[76.72,13.05],[77.22,13.05],[77.22,12.72],[76.72,12.72]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "Pandavapura", "nameLocal": "ಪಾಂಡವಪುರ", "area": 553, "population": 298000 },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[76.32,12.40],[76.32,12.72],[76.65,12.72],[76.65,12.40],[76.32,12.40]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "Mandya", "nameLocal": "ಮಂಡ್ಯ", "area": 762, "population": 523000 },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[76.65,12.40],[76.65,12.72],[77.00,12.72],[77.00,12.40],[76.65,12.40]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "Maddur", "nameLocal": "ಮದ್ದೂರು", "area": 624, "population": 342000 },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[77.00,12.40],[77.00,12.72],[77.22,12.72],[77.22,12.40],[77.00,12.40]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "Srirangapatna", "nameLocal": "ಶ್ರೀರಂಗಪಟ್ಟಣ", "area": 580, "population": 320000 },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[76.32,12.05],[76.32,12.40],[76.70,12.40],[76.70,12.05],[76.32,12.05]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "Malavalli", "nameLocal": "ಮಳವಳ್ಳಿ", "area": 699, "population": 378000 },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[76.70,12.05],[76.70,12.40],[77.22,12.40],[77.22,12.05],[76.70,12.05]]]
+      }
+    }
+  ]
+}

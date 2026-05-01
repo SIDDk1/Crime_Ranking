@@ -1,0 +1,45 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": { "name": "South Mumbai", "slug": "south-mumbai", "nameLocal": "दक्षिण मुंबई", "area": 68, "population": 2100000 },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[72.810,18.890],[72.810,18.970],[72.855,18.970],[72.855,18.890],[72.810,18.890]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "Western Suburbs", "slug": "western-suburbs", "nameLocal": "पश्चिम उपनगर", "area": 155, "population": 3800000 },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[72.810,18.970],[72.810,19.120],[72.855,19.120],[72.855,18.970],[72.810,18.970]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "Eastern Suburbs", "slug": "eastern-suburbs", "nameLocal": "पूर्व उपनगर", "area": 140, "population": 3200000 },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[72.855,18.970],[72.855,19.120],[72.920,19.120],[72.920,18.970],[72.855,18.970]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "Harbour Zone", "slug": "navi-mumbai-zone", "nameLocal": "हार्बर क्षेत्र", "area": 120, "population": 1800000 },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[72.855,18.890],[72.855,18.970],[72.940,18.970],[72.940,18.890],[72.855,18.890]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "North Mumbai", "slug": "north-mumbai", "nameLocal": "उत्तर मुंबई", "area": 120, "population": 1542373 },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[72.810,19.120],[72.810,19.280],[72.895,19.280],[72.895,19.120],[72.810,19.120]]]
+      }
+    }
+  ]
+}
