@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
-
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+import { getApiUrl } from "../../config/api";
 
 export default function StatsCard() {
   const [stats, setStats] = useState([]);
@@ -10,7 +9,7 @@ export default function StatsCard() {
 
     const loadStats = async () => {
       try {
-        const response = await fetch(`${API_URL}/api/areas`);
+        const response = await fetch(getApiUrl('/api/areas'));
         if (!response.ok) {
           throw new Error("Failed to load area data");
         }

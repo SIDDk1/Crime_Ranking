@@ -1,8 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { X, Send, Bot, User } from 'lucide-react';
+import { getApiUrl } from '../config/api';
 
 const AIHelpDesk = ({ onClose }) => {
-  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
   const [messages, setMessages] = useState(() => {
     const saved = localStorage.getItem('ai_helpdesk_history');
     if (saved) {
@@ -45,7 +45,7 @@ const AIHelpDesk = ({ onClose }) => {
     setIsLoading(true);
 
     try {
-      const response = await fetch(`${API_URL}/api/chat`, {
+      const response = await fetch(getApiUrl('/api/chat'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: userMessage }),

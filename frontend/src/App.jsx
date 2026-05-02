@@ -32,8 +32,7 @@ import {
   Users
 } from 'lucide-react';
 import './App.css';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+import { getApiUrl, hasApiUrl, missingApiUrlMessage } from './config/api';
 const TOKEN_KEY = 'crime_console_auth_token';
 const THEME_KEY = 'crime_console_theme';
 
@@ -128,8 +127,7 @@ const DispatchButton = ({ item, isDispatched, onDispatch }) => {
     else if (item.crime_type.toLowerCase().includes("vandalism")) crimeType = "Vandalism";
     else if (item.crime_type.toLowerCase().includes("fighting") || item.crime_type.toLowerCase().includes("fight")) crimeType = "Critical Incident";
 
-    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-    fetch(`${API_URL}/api/dispatch-police`, {
+    fetch(getApiUrl('/api/dispatch-police'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -222,7 +220,7 @@ function App() {
     let cancelled = false;
     const restoreSession = async () => {
       try {
-        const response = await fetch(`${API_URL}/api/auth/me`, {
+        const response = await fetch(getApiUrl('/api/auth/me'), {
           headers: authHeaders
         });
         if (!response.ok) {
@@ -261,10 +259,10 @@ function App() {
     const loadData = async () => {
       try {
         const [areasRes, reportRes, usersRes, historyRes] = await Promise.all([
-          fetch(`${API_URL}/api/areas`),
-          fetch(`${API_URL}/api/generate-report`),
-          fetch(`${API_URL}/api/users`, { headers: authHeaders }),
-          fetch(`${API_URL}/api/alert-history`, { headers: authHeaders })
+          fetch(getApiUrl('/api/areas')),
+          fetch(getApiUrl('/api/generate-report')),
+          fetch(getApiUrl('/api/users'), { headers: authHeaders }),
+          fetch(getApiUrl('/api/alert-history'), { headers: authHeaders })
         ]);
 
         const [areasData, reportData, usersData, historyData] = await Promise.all([
@@ -287,7 +285,7 @@ function App() {
 
     loadData();
 
-    const eventSource = new EventSource(`${API_URL}/api/alerts`);
+    const eventSource = new EventSource(getApiUrl('/api/alerts'));
     eventSource.onmessage = (event) => {
       const data = JSON.parse(event.data);
       if (data.alert) {
@@ -347,7 +345,7 @@ function App() {
       };
 
     try {
-      const response = await fetch(`${API_URL}${endpoint}`, {
+      const response = await fetch(getApiUrl(endpoint), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -448,6 +446,11 @@ function App() {
       <div className="auth-page">
         <BuildingBackground />
         <div className="auth-shell">
+          {!hasApiUrl && (
+            <div className="config-banner" role="alert">
+              {missingApiUrlMessage}
+            </div>
+          )}
           <section className="auth-intro">
             <div className="eyebrow">
               <ShieldCheck size={16} />
@@ -582,6 +585,11 @@ function App() {
   return (
     <div className="console-page">
       <BuildingBackground />
+      {!hasApiUrl && (
+        <div className="config-banner config-banner-floating" role="alert">
+          {missingApiUrlMessage}
+        </div>
+      )}
 
       {currentAlert && (
         <AlertPopup

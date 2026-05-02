@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
+import { getApiUrl } from '../config/api';
 
 const VideoFeed = ({ activeCamera, setActiveCamera }) => {
-  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
-
   const cameras = [
     { id: 1, label: "MAIN INT" },
     { id: 2, label: "EAST WING" },
@@ -16,7 +15,7 @@ const VideoFeed = ({ activeCamera, setActiveCamera }) => {
     <div className="video-feed-container">
       <div className="video-wrapper">
         <img 
-          src={`${API_URL}/video_feed?camera=${activeCamera}`} 
+          src={getApiUrl(`/video_feed?camera=${activeCamera}`)} 
           alt={`Live Security Feed Camera ${activeCamera}`} 
           className="live-video"
           onError={(e) => {

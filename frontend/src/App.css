@@ -74,6 +74,21 @@ button {
   position: relative;
 }
 
+.config-banner {
+  grid-column: 1 / -1;
+  padding: 14px 16px;
+  border-radius: 18px;
+  background: rgba(255, 184, 77, 0.12);
+  border: 1px solid rgba(255, 184, 77, 0.35);
+  color: #ffe0af;
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(16px);
+}
+
+.config-banner-floating {
+  margin: 22px 22px 0;
+}
+
 .auth-shell,
 .console-shell {
   position: relative;

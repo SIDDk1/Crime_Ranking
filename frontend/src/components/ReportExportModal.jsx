@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
 import { X, Download, FileText, FileSpreadsheet, FileDigit } from 'lucide-react';
 import * as XLSX from 'xlsx';
+import { getApiUrl } from '../config/api';
 
 const ReportExportModal = ({ onClose }) => {
-  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
   const [isExporting, setIsExporting] = useState(false);
 
   const fetchReportData = async () => {
     try {
-      const res = await fetch(`${API_URL}/api/generate-report`);
+      const res = await fetch(getApiUrl('/api/generate-report'));
       const data = await res.json();
       return data;
     } catch (err) {
