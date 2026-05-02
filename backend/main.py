@@ -3,6 +3,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from sse_starlette.sse import EventSourceResponse
 import asyncio
+import shutil
+import subprocess
+import time
 import db
 import data_ingestor
 
@@ -43,6 +46,47 @@ app.add_middleware(
 
 # Lazy-load camera processors to prevent Render Free Tier Out Of Memory (OOM) Crash!
 camera_processors = {}
+
+
+def is_ollama_available():
+    """Return True when the local Ollama HTTP server is responding."""
+    try:
+        response = requests.get(f"{OLLAMA_URL}/api/tags", timeout=3)
+        response.raise_for_status()
+        return True
+    except requests.exceptions.RequestException:
+        return False
+
+
+def ensure_ollama_service():
+    """
+    Start Ollama on demand when the binary is installed but the local server
+    is not yet listening. This keeps the help desk working in local demos.
+    """
+    if is_ollama_available():
+        return True
+
+    ollama_path = shutil.which("ollama")
+    if not ollama_path:
+        return False
+
+    creationflags = getattr(subprocess, "CREATE_NO_WINDOW", 0)
+    try:
+        subprocess.Popen(
+            [ollama_path, "serve"],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            creationflags=creationflags,
+        )
+    except OSError:
+        return False
+
+    for _ in range(10):
+        time.sleep(1)
+        if is_ollama_available():
+            return True
+
+    return False
 
 def get_processor(camera_id):
     if camera_id not in camera_processors:
@@ -224,6 +268,8 @@ async def get_alert_history(authorization: str = Header(default=None)):
 async def chat_endpoint(chat: ChatMessage):
     """Handle chat messages for the AI Help Desk."""
     try:
+        ensure_ollama_service()
+
         # Fetch current project data to use as context
         areas = await get_areas()
         context_data = "\n".join([

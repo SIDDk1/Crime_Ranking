@@ -121,7 +121,7 @@ const DispatchButton = ({ item, isDispatched, onDispatch }) => {
     e.stopPropagation();
     if (isDispatched) return;
     setDispatchStatus('sending');
-    
+
     let crimeType = "Critical Incident";
     if (item.crime_type.toLowerCase().includes("thief") || item.crime_type.toLowerCase().includes("robbery") || item.crime_type.toLowerCase().includes("theft")) crimeType = "Robbery/Theft";
     else if (item.crime_type.toLowerCase().includes("murder")) crimeType = "Murder";
@@ -139,32 +139,32 @@ const DispatchButton = ({ item, isDispatched, onDispatch }) => {
         raw_message: item.crime_type
       })
     })
-    .then(res => res.json())
-    .then(() => { 
-      setDispatchStatus('sent'); 
-      if (onDispatch) onDispatch(item.id); 
-      
-      const camId = item.frame_path ? parseInt(item.frame_path.replace(/[^\d]/g, '') || 1, 10) : 1;
-      const timeStr = new Date(item.timestamp).toLocaleTimeString();
-      window.alert(`🚨 SECURE DISPATCH CONFIRMED\n\nEmergency units have been deployed to intercept the suspects.\n\n📍 Location: Camera 0${camId} Zone\n⏰ Time: ${timeStr}\n⚠️ Incident: ${crimeType}\n📄 Details: ${item.crime_type}\n\nAll nearby units have received the automated telemetry data.`);
-    })
-    .catch(() => { 
-      setDispatchStatus('sent'); 
-      if (onDispatch) onDispatch(item.id); 
-      
-      const camId = item.frame_path ? parseInt(item.frame_path.replace(/[^\d]/g, '') || 1, 10) : 1;
-      const timeStr = new Date(item.timestamp).toLocaleTimeString();
-      window.alert(`🚨 SECURE DISPATCH CONFIRMED\n\nEmergency units have been deployed to intercept the suspects.\n\n📍 Location: Camera 0${camId} Zone\n⏰ Time: ${timeStr}\n⚠️ Incident: ${crimeType}\n📄 Details: ${item.crime_type}\n\nAll nearby units have received the automated telemetry data.`);
-    });
+      .then(res => res.json())
+      .then(() => {
+        setDispatchStatus('sent');
+        if (onDispatch) onDispatch(item.id);
+
+        const camId = item.frame_path ? parseInt(item.frame_path.replace(/[^\d]/g, '') || 1, 10) : 1;
+        const timeStr = new Date(item.timestamp).toLocaleTimeString();
+        window.alert(`🚨 SECURE DISPATCH CONFIRMED\n\nEmergency units have been deployed to intercept the suspects.\n\n📍 Location: Camera 0${camId} Zone\n⏰ Time: ${timeStr}\n⚠️ Incident: ${crimeType}\n📄 Details: ${item.crime_type}\n\nAll nearby units have received the automated telemetry data.`);
+      })
+      .catch(() => {
+        setDispatchStatus('sent');
+        if (onDispatch) onDispatch(item.id);
+
+        const camId = item.frame_path ? parseInt(item.frame_path.replace(/[^\d]/g, '') || 1, 10) : 1;
+        const timeStr = new Date(item.timestamp).toLocaleTimeString();
+        window.alert(`🚨 SECURE DISPATCH CONFIRMED\n\nEmergency units have been deployed to intercept the suspects.\n\n📍 Location: Camera 0${camId} Zone\n⏰ Time: ${timeStr}\n⚠️ Incident: ${crimeType}\n📄 Details: ${item.crime_type}\n\nAll nearby units have received the automated telemetry data.`);
+      });
   };
 
   return (
-    <button 
+    <button
       onClick={handleDispatch}
       disabled={currentStatus !== 'idle'}
       style={{
         marginLeft: 'auto',
-        display: 'flex', alignItems: 'center', gap: '6px', 
+        display: 'flex', alignItems: 'center', gap: '6px',
         backgroundColor: currentStatus === 'sent' ? '#2e7d32' : '#d32f2f',
         color: 'white', border: 'none', padding: '4px 8px', borderRadius: '4px',
         cursor: currentStatus === 'idle' ? 'pointer' : 'default',
@@ -336,15 +336,15 @@ function App() {
     const endpoint = authMode === 'register' ? '/api/auth/register' : '/api/auth/login';
     const payload = authMode === 'register'
       ? {
-          full_name: authForm.fullName,
-          email: authForm.email,
-          password: authForm.password,
-          role: 'Administrator'
-        }
+        full_name: authForm.fullName,
+        email: authForm.email,
+        password: authForm.password,
+        role: 'Administrator'
+      }
       : {
-          email: authForm.email,
-          password: authForm.password
-        };
+        email: authForm.email,
+        password: authForm.password
+      };
 
     try {
       const response = await fetch(`${API_URL}${endpoint}`, {
@@ -477,9 +477,9 @@ function App() {
 
           <section className="auth-card">
             <div className="auth-card-top" style={{ flexWrap: 'wrap', gap: '10px' }}>
-              <button 
-                type="button" 
-                className="theme-toggle" 
+              <button
+                type="button"
+                className="theme-toggle"
                 onClick={() => setShowLanding(true)}
               >
                 <ArrowLeft size={16} />
@@ -792,7 +792,7 @@ function App() {
                       liveAlertFeed.map((item) => (
                         <div key={item.id} className="list-row">
                           <div>
-                        <strong>{formatCrimeLabel(item.crime_type)}</strong>
+                            <strong>{formatCrimeLabel(item.crime_type)}</strong>
                             <span>{formatTimestamp(item.timestamp)}</span>
                           </div>
                           <span className={`tag ${item.isLive ? 'critical' : 'neutral'}`}>
@@ -836,7 +836,7 @@ function App() {
                     .filter(area => !area.name.toUpperCase().includes('TOTAL'))
                     .map(area => {
                       const total = (area.crime_keys || []).reduce((sum, key) => sum + (area[key] || 0), 0);
-                      
+
                       let topCrimeName = 'N/A';
                       let topCrimeValue = 0;
                       (area.crime_keys || []).forEach(key => {
@@ -851,14 +851,14 @@ function App() {
                     .sort((a, b) => b.total_crimes - a.total_crimes)
                     .slice(0, 8)
                     .map((area) => (
-                    <div key={area.id} className="list-row">
-                      <div>
-                        <strong>{area.name}</strong>
-                        <span>Total IPC Crimes: {area.total_crimes.toLocaleString()} | Top Offense: {area.top_crime_name} ({area.top_crime_value.toLocaleString()})</span>
+                      <div key={area.id} className="list-row">
+                        <div>
+                          <strong>{area.name}</strong>
+                          <span>Total IPC Crimes: {area.total_crimes.toLocaleString()} | Top Offense: {area.top_crime_name} ({area.top_crime_value.toLocaleString()})</span>
+                        </div>
+                        <span className={`tag ${getDangerTone(area.danger_rank)}`}>{area.danger_rank}</span>
                       </div>
-                      <span className={`tag ${getDangerTone(area.danger_rank)}`}>{area.danger_rank}</span>
-                    </div>
-                  ))}
+                    ))}
                 </div>
               </div>
             </section>
@@ -932,11 +932,11 @@ function App() {
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart data={analyticsBarData} margin={{ top: 20, right: 20, left: 0, bottom: 60 }}>
                         <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} />
-                        <XAxis dataKey="name" stroke="#94a3b8" angle={-45} textAnchor="end" interval={0} tick={{fontSize: 11}} />
-                        <YAxis stroke="#94a3b8" tick={{fontSize: 12}} />
-                        <RechartsTooltip 
-                          cursor={{fill: '#1e293b'}} 
-                          contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #334155', color: '#fff', borderRadius: '8px' }} 
+                        <XAxis dataKey="name" stroke="#94a3b8" angle={-45} textAnchor="end" interval={0} tick={{ fontSize: 11 }} />
+                        <YAxis stroke="#94a3b8" tick={{ fontSize: 12 }} />
+                        <RechartsTooltip
+                          cursor={{ fill: '#1e293b' }}
+                          contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #334155', color: '#fff', borderRadius: '8px' }}
                         />
                         <Bar dataKey="total_crimes" name="Total Crimes" fill="#3b82f6" radius={[4, 4, 0, 0]} />
                       </BarChart>
@@ -958,8 +958,8 @@ function App() {
                     <ResponsiveContainer width="100%" height="100%">
                       <LineChart data={alerts.map((a, i) => ({ time: formatTimestamp(a.timestamp).split(' ')[1] || `T-${i}`, type: a.crime_type, count: i + 1 }))} margin={{ top: 20, right: 20, left: 0, bottom: 20 }}>
                         <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} />
-                        <XAxis dataKey="time" stroke="#94a3b8" tick={{fontSize: 12}} />
-                        <YAxis stroke="#94a3b8" tick={{fontSize: 12}} />
+                        <XAxis dataKey="time" stroke="#94a3b8" tick={{ fontSize: 12 }} />
+                        <YAxis stroke="#94a3b8" tick={{ fontSize: 12 }} />
                         <RechartsTooltip contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #334155', color: '#fff', borderRadius: '8px' }} />
                         <Line type="monotone" dataKey="count" name="Cumulative Alerts" stroke="#e11d48" strokeWidth={3} dot={{ r: 4, fill: '#e11d48' }} activeDot={{ r: 6 }} />
                       </LineChart>
@@ -1006,14 +1006,14 @@ function App() {
                       <div key={item.id} className="alert-history-row" style={{ display: 'flex', alignItems: 'center', width: '100%' }}>
                         <div className={`severity-bar ${item.isLive ? 'critical' : 'neutral'}`}></div>
                         <div className="alert-history-copy">
-                            <strong>{formatCrimeLabel(item.crime_type)}</strong>
+                          <strong>{formatCrimeLabel(item.crime_type)}</strong>
                           <span>{formatTimestamp(item.timestamp)}</span>
                         </div>
                         <span className={`tag ${item.isLive ? 'critical' : 'neutral'}`} style={{ marginLeft: '12px' }}>
                           {item.frame_path || 'System'}
                         </span>
-                        <DispatchButton 
-                          item={item} 
+                        <DispatchButton
+                          item={item}
                           isDispatched={!!dispatchedAlertIds[item.id]}
                           onDispatch={(id) => setDispatchedAlertIds(prev => ({ ...prev, [id]: true }))}
                         />

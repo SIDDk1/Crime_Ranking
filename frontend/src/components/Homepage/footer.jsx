@@ -1,13 +1,15 @@
-import React from "react";
+import React, { useState } from "react";
 
 function Footer({ onNavigateToAuth }) {
+  const [rating, setRating] = useState(0);
+
   const columns = [
     {
       title: "Team",
       links: [
         { name: "Abhishek Kaushik", url: "https://github.com/Abhi999k" },
         { name: "Siddharth Kaushik", url: "https://siddk1-portfolio.vercel.app/" },
-        { name: "Saurabh Pandey", url: "#" },
+        { name: "Saurabh Pandey", url: "https://github.com/mrsaurabh2312" },
         { name: "Shivam Sharma", url: "https://portfolio-vxrf.vercel.app/" }
       ]
     },
@@ -40,9 +42,18 @@ function Footer({ onNavigateToAuth }) {
             <span>Rate your experience</span>
             <div className="stars">
               {[...Array(5)].map((_, i) => (
-                <svg key={i} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6B7280" strokeWidth="1.5">
-                  <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" />
-                </svg>
+                <button
+                  key={i}
+                  type="button"
+                  className={`star-button ${i < rating ? "is-active" : ""}`}
+                  onClick={() => setRating(i + 1)}
+                  aria-label={`Rate ${i + 1} star${i === 0 ? "" : "s"}`}
+                  aria-pressed={i < rating}
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="1.5">
+                    <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" />
+                  </svg>
+                </button>
               ))}
             </div>
           </div>

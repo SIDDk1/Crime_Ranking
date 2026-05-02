@@ -2,12 +2,12 @@ import React from "react";
 import { Shield, Menu, ArrowRight } from "lucide-react";
 
 const tickerItems = [
-  { label: "Theft Cases", value: "₹2,45,892", trend: "▼ -3.2%", trendClass: "trend-down" },
-  { label: "Cyber Crime", value: "₹1,89,234", trend: "▲ +1.8%", trendClass: "trend-up" },
+  { label: "Theft Cases", value: "2,45,892", trend: "▼ -3.2%", trendClass: "trend-down" },
+  { label: "Cyber Crime", value: "1,89,234", trend: "▲ +1.8%", trendClass: "trend-up" },
   { label: "Traffic Violations", value: "3,12,456" },
   { label: "Fraud Cases", value: "5,67,890", trend: "▼ -0.8%", trendClass: "trend-down" },
-  { label: "Property Crime", value: "₹4,23,100", trend: "▲ +2.1%", trendClass: "trend-up" },
-  { label: "Violent Crime", value: "₹1,34,567", trend: "▼ -1.5%", trendClass: "trend-down" }
+  { label: "Property Crime", value: "4,23,100", trend: "▲ +2.1%", trendClass: "trend-up" },
+  { label: "Violent Crime", value: "1,34,567", trend: "▼ -1.5%", trendClass: "trend-down" }
 ];
 
 export default function Navbar({ onNavigateToAuth }) {
