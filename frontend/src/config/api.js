@@ -4,7 +4,7 @@ const explicitApiUrl = trimTrailingSlash((import.meta.env.VITE_API_URL || "").tr
 const hostname = typeof window !== "undefined" ? window.location.hostname : "";
 const isLocalHostname = ["localhost", "127.0.0.1", "::1"].includes(hostname);
 
-export const API_URL = explicitApiUrl || (isLocalHostname ? "http://localhost:8000" : "");
+export const API_URL = explicitApiUrl || (isLocalHostname ? "http://localhost:8000" : "https://crime-ranking-backend.onrender.com");
 export const hasApiUrl = Boolean(API_URL);
 export const missingApiUrlMessage = hasApiUrl
   ? ""
