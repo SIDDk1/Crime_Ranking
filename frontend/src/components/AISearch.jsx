@@ -36,28 +36,13 @@ const AISearch = ({ areas }) => {
       </div>
 
       <div style={{ marginTop: '12px', marginBottom: '16px' }}>
-        <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '12px', lineHeight: '1.4' }}>
-          Ask information <strong>only</strong> about the cities currently under active surveillance by this project.
-        </p>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '16px' }}>
-          {availableCities.slice(0, 10).map((city, idx) => (
-            <span key={idx} className="tag neutral" style={{ fontSize: '0.7rem', padding: '4px 8px' }}>
-              {city}
-            </span>
-          ))}
-          {availableCities.length > 10 && (
-            <span className="tag neutral" style={{ fontSize: '0.7rem', padding: '4px 8px' }}>
-              +{availableCities.length - 10} more
-            </span>
-          )}
-        </div>
-
         <form onSubmit={handleSearch} style={{ display: 'flex', gap: '8px' }}>
           <div style={{ position: 'relative', flex: 1 }}>
             <Search size={14} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
             <input 
               type="text" 
-              placeholder="Enter city name..."
+              list="city-options"
+              placeholder="Search or select city name..."
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               style={{ 
@@ -70,6 +55,11 @@ const AISearch = ({ areas }) => {
                 fontSize: '0.9rem'
               }}
             />
+            <datalist id="city-options">
+              {availableCities.sort().map((city, idx) => (
+                <option key={idx} value={city} />
+              ))}
+            </datalist>
           </div>
           <button 
             type="submit"

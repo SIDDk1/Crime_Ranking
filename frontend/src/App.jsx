@@ -23,7 +23,6 @@ import {
   LayoutDashboard,
   LogOut,
   Map,
-  MoonStar,
   Send,
   Shield,
   ShieldCheck,
@@ -34,7 +33,6 @@ import {
 import './App.css';
 import { getApiUrl, hasApiUrl, missingApiUrlMessage } from './config/api';
 const TOKEN_KEY = 'crime_console_auth_token';
-const THEME_KEY = 'crime_console_theme';
 
 const navigation = [
   { id: 'overview', label: 'Admin Dashboard', icon: LayoutDashboard },
@@ -176,7 +174,6 @@ const DispatchButton = ({ item, isDispatched, onDispatch }) => {
 };
 
 function App() {
-  const [themeMode, setThemeMode] = useState(() => localStorage.getItem(THEME_KEY) || 'stealth');
   const [areas, setAreas] = useState([]);
   const [report, setReport] = useState(null);
   const [users, setUsers] = useState([]);
@@ -205,11 +202,6 @@ function App() {
   const authHeaders = useMemo(() => (
     authToken ? { Authorization: `Bearer ${authToken}` } : {}
   ), [authToken]);
-
-  useEffect(() => {
-    document.documentElement.dataset.theme = themeMode;
-    localStorage.setItem(THEME_KEY, themeMode);
-  }, [themeMode]);
 
   useEffect(() => {
     if (!authToken) {
@@ -383,10 +375,6 @@ function App() {
     setActiveSection('overview');
   };
 
-  const toggleTheme = () => {
-    setThemeMode((previous) => (previous === 'stealth' ? 'stealth-alt' : 'stealth'));
-  };
-
   const sortedAreas = useMemo(() => (
     [...areas]
       .filter(area => !area.name.toUpperCase().includes('TOTAL'))
@@ -510,10 +498,6 @@ function App() {
                   Sign In
                 </button>
               </div>
-              <button type="button" className="theme-toggle" onClick={toggleTheme} aria-pressed={themeMode !== 'stealth'}>
-                <MoonStar size={16} />
-                Dark Mode
-              </button>
             </div>
 
             <div className="auth-card-header">
@@ -701,10 +685,6 @@ function App() {
                 <ArrowLeft size={16} />
                 Home Page
               </button>
-              <button type="button" className="theme-toggle" onClick={toggleTheme} aria-pressed={themeMode !== 'stealth'}>
-                <MoonStar size={16} />
-                Dark Mode
-              </button>
               <div className="operator-card">
                 <span className="operator-avatar">
                   {currentUser.full_name?.slice(0, 1)?.toUpperCase() || 'A'}
@@ -721,30 +701,32 @@ function App() {
             </div>
           </header>
 
-          <section className="hero-banner">
-            <div>
-              <p className="hero-kicker">Command View</p>
-              <h3>Separate workspaces for every operational function</h3>
-              <p className="hero-copy">
-                Monitor city risk, respond to live anomalies, review user access, and manage
-                crime intelligence from one professional admin surface.
-              </p>
-            </div>
-            <div className="hero-stats">
+          {activeSection === 'overview' && (
+            <section className="hero-banner">
               <div>
-                <span>Total Areas</span>
-                <strong>{areas.length || '--'}</strong>
+                <p className="hero-kicker">Command View</p>
+                <h3>Separate workspaces for every operational function</h3>
+                <p className="hero-copy">
+                  Monitor city risk, respond to live anomalies, review user access, and manage
+                  crime intelligence from one professional admin surface.
+                </p>
               </div>
-              <div>
-                <span>Critical Zones</span>
-                <strong>{criticalAreas.length}</strong>
+              <div className="hero-stats">
+                <div>
+                  <span>Total Areas</span>
+                  <strong>{areas.length || '--'}</strong>
+                </div>
+                <div>
+                  <span>Critical Zones</span>
+                  <strong>{criticalAreas.length}</strong>
+                </div>
+                <div>
+                  <span>Registered Users</span>
+                  <strong>{users.length}</strong>
+                </div>
               </div>
-              <div>
-                <span>Registered Users</span>
-                <strong>{users.length}</strong>
-              </div>
-            </div>
-          </section>
+            </section>
+          )}
 
           {activeSection === 'overview' && (
             <section className="content-grid">

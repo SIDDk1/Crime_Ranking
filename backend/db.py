@@ -4,15 +4,17 @@ from bson.objectid import ObjectId
 import datetime
 import hashlib
 import secrets
-
 import os
 
 MONGO_URI = os.environ.get("MONGO_URI", "mongodb://localhost:27017/?serverSelectionTimeoutMS=2000")
-DB_NAME = "CrimeRankingDB"
+MONGO_DB_NAME = os.environ.get("MONGO_DB_NAME", "CrimeRankingDB")
+_client = None
 
 def get_db():
-    client = MongoClient(MONGO_URI)
-    return client[DB_NAME]
+    global _client
+    if _client is None:
+        _client = MongoClient(MONGO_URI)
+    return _client[MONGO_DB_NAME]
 
 def init_db():
     try:
