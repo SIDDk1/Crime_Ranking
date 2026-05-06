@@ -35,11 +35,17 @@ async def root():
     """Health check endpoint for cron-job pinging."""
     return {"status": "online", "message": "Crime Ranking API is running"}
 
-# Setup CORS for React frontend (Wildcard origins allowed only if credentials are False)
+# Setup CORS for React frontend
+origins = [
+    "http://localhost:5173",  # Local dev
+    "http://localhost:3000",
+    "https://crime-ranking-gvvi.vercel.app",  # Production frontend
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], 
-    allow_credentials=False,
+    allow_origins=origins,
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
