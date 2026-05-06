@@ -41,12 +41,13 @@ import re
 ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "http://localhost:3000",
+    "https://crime-ranking.vercel.app",
     "https://crime-ranking-gvvi.vercel.app",
     "https://crime-ranking-oy71g2yml-siddharth-kaushiks-projects-b8d1acb8.vercel.app",
 ]
 
-# Allow any Vercel preview URL for this project
-VERCEL_PATTERN = re.compile(r"https://crime-ranking-[a-z0-9-]+\.vercel\.app")
+# Allow any Vercel preview URL for this project (matches crime-ranking.vercel.app and crime-ranking-*.vercel.app)
+VERCEL_PATTERN = re.compile(r"https://crime-ranking(-[a-z0-9-]+)?\.vercel\.app$")
 
 class DynamicCORSMiddleware(CORSMiddleware):
     def is_allowed_origin(self, origin: str) -> bool:
