@@ -35,16 +35,30 @@ async def root():
     """Health check endpoint for cron-job pinging."""
     return {"status": "online", "message": "Crime Ranking API is running"}
 
-# Setup CORS for React frontend
-origins = [
-    "http://localhost:5173",  # Local dev
+# Setup CORS for React frontend - Allow Vercel preview URLs
+import re
+
+ALLOWED_ORIGINS = [
+    "http://localhost:5173",
     "http://localhost:3000",
-    "https://crime-ranking-gvvi.vercel.app",  # Production frontend
+    "https://crime-ranking-gvvi.vercel.app",
+    "https://crime-ranking-oy71g2yml-siddharth-kaushiks-projects-b8d1acb8.vercel.app",
 ]
 
+# Allow any Vercel preview URL for this project
+VERCEL_PATTERN = re.compile(r"https://crime-ranking-[a-z0-9-]+\.vercel\.app")
+
+class DynamicCORSMiddleware(CORSMiddleware):
+    def is_allowed_origin(self, origin: str) -> bool:
+        if origin in ALLOWED_ORIGINS:
+            return True
+        if VERCEL_PATTERN.match(origin):
+            return True
+        return False
+
 app.add_middleware(
-    CORSMiddleware,
-    allow_origins=origins,
+    DynamicCORSMiddleware,
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
