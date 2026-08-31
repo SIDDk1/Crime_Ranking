@@ -8,6 +8,7 @@ import AIHelpDesk from './components/AIHelpDesk';
 import ReportExportModal from './components/ReportExportModal';
 import LandingPage from './components/LandingPage';
 import AISearch from './components/AISearch';
+import CertificatesSection from './components/CertificatesSection';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer,
   PieChart, Pie, Cell, LineChart, Line
@@ -15,6 +16,7 @@ import {
 import {
   AlertTriangle,
   ArrowLeft,
+  Award,
   BarChart3,
   Bell,
   BrainCircuit,
@@ -42,6 +44,7 @@ const navigation = [
   { id: 'cameras', label: 'Cameras', icon: Camera },
   { id: 'alerts', label: 'Alerts', icon: Bell },
   { id: 'crimes', label: 'Crimes', icon: AlertTriangle },
+  { id: 'certificates', label: 'Certifications', icon: Award },
   { id: 'users', label: 'Users', icon: Users },
   { id: 'profile', label: 'Profile', icon: UserCircle2 }
 ];
@@ -1122,6 +1125,10 @@ function App() {
             </section>
           )}
 
+          {activeSection === 'certificates' && (
+            <CertificatesSection currentUser={currentUser} />
+          )}
+
           {activeSection === 'users' && (
             <section className="single-column">
               <div className="panel">
@@ -1162,7 +1169,7 @@ function App() {
                 <div className="panel-heading">
                   <div>
                     <p className="eyebrow-text">Identity</p>
-                    <h3>Profile section</h3>
+                    <h3>Profile & Accreditation section</h3>
                   </div>
                 </div>
                 <div className="profile-grid">
@@ -1185,12 +1192,28 @@ function App() {
                       <strong>{formatTimestamp(currentUser.created_at)}</strong>
                     </div>
                     <div className="detail-block">
-                      <span>Current Access</span>
-                      <strong>Dashboard, alerts, reports, AI help desk</strong>
+                      <span>Accreditations & Certificates</span>
+                      <button
+                        type="button"
+                        onClick={() => setActiveSection('certificates')}
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          color: 'var(--accent)',
+                          fontWeight: '700',
+                          cursor: 'pointer',
+                          textAlign: 'left',
+                          padding: 0,
+                          fontSize: '0.92rem',
+                          textDecoration: 'underline'
+                        }}
+                      >
+                        📜 Manage & View Certificates Portal →
+                      </button>
                     </div>
                     <div className="detail-block">
                       <span>Security Status</span>
-                      <strong>Authenticated session active</strong>
+                      <strong style={{ color: '#10b981' }}>Authenticated session active</strong>
                     </div>
                   </div>
                 </div>
