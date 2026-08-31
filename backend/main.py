@@ -381,28 +381,6 @@ async def get_alert_history(authorization: str = Header(default=None)):
     except Exception:
         return []
 
-@app.get("/api/certificates")
-async def get_certificates():
-    try:
-        return db.list_certificates()
-    except Exception:
-        return []
-
-@app.post("/api/certificates")
-async def create_or_update_certificate(cert: dict):
-    try:
-        return db.save_certificate(cert)
-    except Exception as e:
-        return {"status": "saved_fallback", "cert": cert}
-
-@app.delete("/api/certificates/{cert_id}")
-async def delete_certificate_endpoint(cert_id: str):
-    try:
-        db.delete_certificate(cert_id)
-        return {"status": "success", "id": cert_id}
-    except Exception:
-        return {"status": "success"}
-
 @app.post("/api/chat")
 async def chat_endpoint(chat: ChatMessage):
     """Handle chat messages for the AI Help Desk."""
